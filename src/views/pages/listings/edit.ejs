@@ -1,0 +1,100 @@
+<%- include('../../partials/head', { title }) %>
+<div class="dashboardShell dashboardUnified dashboardFuture" id="dashboardApp">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <button class="dashboardDrawerMask" id="dashboardDrawerMask" type="button" aria-label="Close menu"></button>
+
+  <main class="dashboardMain">
+    <section class="dashboardPanel dashboardFormShell">
+      <div class="dashboardTopbar">
+        <div class="dashboardTitle">
+          <h1>Edit listing</h1>
+          <p>Update content, pricing, amenities, and images without leaving the main dashboard experience.</p>
+        </div>
+        <div class="topbarActions">
+          <button class="dashMenuBtn mobileOnlyDash" id="dashboardMenuToggle" type="button">☰ Menu</button>
+          <a class="dashGhostBtn" href="/dashboard/manage-listings">Manage listings</a>
+          <a class="dashPrimaryBtn" href="/listings/<%= listing.slug %>">Preview</a>
+        </div>
+      </div>
+
+      <article class="dashCard formHintCard">
+        <strong>Editing workspace</strong>
+        <p class="muted" style="margin:0">Keep all important details current so the listing stays clean, trusted, and easy to browse.</p>
+      </article>
+
+      <form class="tableCard dashboardFormCard" action="/listings/<%= listing._id %>/update" method="post" enctype="multipart/form-data">
+        <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+        <div class="formSectionTitle">
+          <div>
+            <h3 style="margin:0">Listing details</h3>
+            <p class="muted" style="margin:6px 0 0">Review the main information first, then update media below.</p>
+          </div>
+          <span class="badgeSoft">Classic Rentals standard form</span>
+        </div>
+
+        <div class="formGrid two">
+          <label>Title<input class="input" name="title" value="<%= listing.title %>" required> <% if (formErrors?.title) { %><small style="color:#dc2626"><%= formErrors.title %></small><% } %></label>
+          <label>Category<select class="input" name="category" required><% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(c=>{ %><option value="<%= c %>" <%= listing.category===c?'selected':'' %>><%= c %></option><% }) %></select> <% if (formErrors?.category) { %><small style="color:#dc2626"><%= formErrors.category %></small><% } %></label>
+          <label>Purpose<select class="input" name="purpose"><option value="rent" <%= listing.purpose==='rent'?'selected':'' %>>Rent</option><option value="sale" <%= listing.purpose==='sale'?'selected':'' %>>Sale</option></select></label>
+          <label>Price<input class="input" type="number" name="priceAmount" value="<%= listing.price?.amount || '' %>" min="0" required> <% if (formErrors?.priceAmount) { %><small style="color:#dc2626"><%= formErrors.priceAmount %></small><% } %></label>
+          <label>Currency<input class="input" name="currency" value="<%= listing.price?.currency || 'USD' %>"></label>
+          <label>Price unit<select class="input" name="priceUnit"><% ['day','month','year','one-time'].forEach(u=>{ %><option value="<%= u %>" <%= listing.price?.unit===u?'selected':'' %>><%= u %></option><% }) %></select></label>
+          <label>City<input class="input" name="city" value="<%= listing.location?.city || 'Juba' %>"></label>
+          <label>Area<input class="input" name="area" value="<%= listing.location?.area || '' %>" required> <% if (formErrors?.area) { %><small style="color:#dc2626"><%= formErrors.area %></small><% } %></label>
+          <label>Address<input class="input" name="addressLine" value="<%= listing.location?.addressLine || '' %>"></label>
+          <label>Latitude<input class="input" name="latitude" value="<%= listing.location?.latitude || '' %>"> <% if (formErrors?.latitude) { %><small style="color:#dc2626"><%= formErrors.latitude %></small><% } %></label>
+          <label>Longitude<input class="input" name="longitude" value="<%= listing.location?.longitude || '' %>"> <% if (formErrors?.longitude) { %><small style="color:#dc2626"><%= formErrors.longitude %></small><% } %></label>
+          <label>Bedrooms<input class="input" type="number" name="bedrooms" value="<%= listing.specs?.bedrooms || '' %>"></label>
+          <label>Bathrooms<input class="input" type="number" name="bathrooms" value="<%= listing.specs?.bathrooms || '' %>"></label>
+          <label>Size sqm<input class="input" type="number" name="sizeSqm" value="<%= listing.specs?.sizeSqm || '' %>"></label>
+          <label>Year<input class="input" type="number" name="year" value="<%= listing.specs?.year || '' %>"></label>
+          <label>Fuel type<input class="input" name="fuelType" value="<%= listing.specs?.fuelType || '' %>"></label>
+          <label>Transmission<input class="input" name="transmission" value="<%= listing.specs?.transmission || '' %>"></label>
+          <label>Amenities<input class="input" name="amenities" value="<%= (listing.amenities || []).join(', ') %>"></label>
+          <label>Images<input class="input" type="file" name="images" accept="image/*" multiple></label>
+        </div>
+
+        <label style="margin-top:14px">Description<textarea class="input" name="description" rows="7" required><%= listing.description %></textarea> <% if (formErrors?.description) { %><small style="color:#dc2626"><%= formErrors.description %></small><% } %></label>
+
+        <% if ((listing.images || []).length) { %>
+          <div style="margin-top:18px">
+            <div class="formSectionTitle">
+              <div>
+                <h3 style="margin:0">Listing media</h3>
+                <p class="muted" style="margin:6px 0 0">Choose a primary image and remove old media when needed.</p>
+              </div>
+            </div>
+            <div class="mediaGrid">
+              <% listing.images.forEach(img => { %>
+                <figure class="mediaCard">
+                  <img src="<%= img.url %>" alt="">
+                  <figcaption style="display:grid;gap:10px;margin-top:10px">
+                    <span><%= img.isPrimary ? 'Primary image' : 'Listing image' %></span>
+                    <div class="formActionRow" style="margin-top:0">
+                      <% if (!img.isPrimary) { %>
+                        <form action="/listings/<%= listing._id %>/images/<%= img.publicId %>/primary" method="post">
+                          <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+                          <button class="tinyBtn" type="submit">Make primary</button>
+                        </form>
+                      <% } %>
+                      <form action="/listings/<%= listing._id %>/images/<%= img.publicId %>/delete" method="post" onsubmit="return confirm('Remove this image?')">
+                        <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+                        <button class="tinyBtn" type="submit">Delete image</button>
+                      </form>
+                    </div>
+                  </figcaption>
+                </figure>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="formActionRow">
+          <button class="btn" type="submit">Save changes</button>
+          <a class="btn alt" href="/dashboard/manage-listings">Back</a>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+</body></html>

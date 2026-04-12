@@ -1,0 +1,88 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Listings</h2><p>Manage all listing records with the same new UI styling and open each item in a detail workspace.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="primary-btn" href="/listings/create">+ Create listing</a></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= (pagination?.total || listings.length).toLocaleString() %></h5><p>Results</p></div>
+      <div class="metric-box"><h5><%= Number(pendingCount || 0).toLocaleString() %></h5><p>Pending</p></div>
+      <div class="metric-box"><h5><%= Number(publishedCount || 0).toLocaleString() %></h5><p>Published</p></div>
+      <div class="metric-box"><h5><%= (agents || []).length.toLocaleString() %></h5><p>Available agents</p></div>
+    </section>
+
+    <section class="card toolbar-card stacked-toolbar-card">
+      <form class="filter-grid-4" method="get" action="/dashboard/manage-listings">
+        <div class="field">
+          <label for="listingQ">Search</label>
+          <input id="listingQ" name="q" placeholder="Title or area" value="<%= filters?.q || '' %>">
+        </div>
+        <div class="field">
+          <label for="listingStatus">Status</label>
+          <select id="listingStatus" name="status"><option value="">All statuses</option><% ['pending','published','rejected','archived','draft'].forEach(s=>{ %><option value="<%= s %>" <%= filters?.status===s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+        </div>
+        <div class="field">
+          <label for="listingCategory">Category</label>
+          <select id="listingCategory" name="category"><option value="">All categories</option><% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(s=>{ %><option value="<%= s %>" <%= filters?.category===s ? 'selected' : '' %>><%= s %></option><% }) %></select>
+        </div>
+        <div class="field-inline">
+          <button class="primary-btn stretch-btn" type="submit">Apply filters</button>
+          <a class="ghost-btn stretch-btn" href="/dashboard/manage-listings">Reset</a>
+        </div>
+      </form>
+
+      <% if (['admin','super-admin'].includes(currentUser.role)) { %>
+      <form id="bulkListingsForm" class="filter-grid-4 filter-grid-4-subtle" method="post" action="/dashboard/manage-listings/bulk">
+        <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+        <div class="field">
+          <label for="bulkAction">Bulk action</label>
+          <select id="bulkAction" name="action"><option value="publish">Publish selected</option><option value="reject">Reject selected</option><option value="archive">Archive selected</option><option value="feature">Feature selected</option><option value="unfeature">Unfeature selected</option><option value="verify">Verify selected</option><option value="unverify">Unverify selected</option></select>
+        </div>
+        <div class="field" style="align-self:end"><div class="tableBulkHint">Choose rows, then run the bulk action.</div></div>
+        <div class="field"><button class="primary-btn stretch-btn" type="submit">Run bulk action</button></div>
+        <div class="field"><a class="ghost-btn stretch-btn" href="/listings/create">+ Create listing</a></div>
+      </form>
+      <% } %>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead><tr><th>Listing</th><th>Price</th><th>Status</th><th>Info</th><th>Action</th></tr></thead>
+          <tbody>
+            <% listings.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.title %></strong>
+                    <span><%= item.category %> • <%= item.location?.area || '-' %></span>
+                  </div>
+                </td>
+                <td><strong><%= item.price?.currency || 'USD' %> <%= Number(item.price?.amount || 0).toLocaleString() %></strong><br><span class="muted">per <%= item.price?.unit || 'month' %></span></td>
+                <td><span class="status soft <%= item.status === 'published' ? 'published' : item.status === 'pending' ? 'pending' : 'vacant' %>"><%= item.status %></span></td>
+                <td>
+                  <div class="table-title-cell">
+                    <span>Owner: <%= item.owner ? `${item.owner.firstName} ${item.owner.lastName}` : '-' %></span>
+                    <span>Agent: <%= item.assignedAgent ? `${item.assignedAgent.firstName} ${item.assignedAgent.lastName}` : '-' %></span>
+                    <span><%= item.verified ? 'Verified' : 'Unverified' %> • <%= item.featured ? 'Featured' : 'Standard' %></span>
+                  </div>
+                </td>
+                <td><div class="table-actions-row"><a class="tiny-btn" href="/dashboard/manage-listings/<%= item._id %>">View details</a></div></td>
+              </tr>
+            <% }) %>
+            <% if (!listings.length) { %><tr><td colspan="5">No listings found for this dashboard scope.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, filters }) %>
+    </section>
+  </main>
+</div>
+</body></html>

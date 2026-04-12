@@ -1,0 +1,84 @@
+<%- include('../../partials/head', { title }) %>
+<%- include('../../partials/nav') %>
+<%
+const primaryImage = (listing.images && (listing.images.find(i => i.isPrimary) || listing.images[0]))
+  ? (listing.images.find(i => i.isPrimary) || listing.images[0]).url
+  : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1400&auto=format&fit=crop';
+%>
+<section class="section">
+  <div class="wrap listingShowShell">
+    <div class="panel listingShowMain">
+      <div class="listingHeroMedia">
+        <img id="listingMainImage" src="<%= primaryImage %>" alt="<%= listing.title %>">
+      </div>
+      <% if (listing.images && listing.images.length > 1) { %>
+        <div class="thumbRail">
+          <% listing.images.forEach((img) => { %>
+            <button type="button" class="thumbMini" data-image-src="<%= img.url %>">
+              <img src="<%= img.url %>" alt="thumb">
+            </button>
+          <% }) %>
+        </div>
+      <% } %>
+      <div class="listingShowBody">
+        <div class="badgeRow">
+          <% if (listing.verified) { %><span class="b ok">Verified</span><% } %>
+          <% if (listing.featured) { %><span class="b feat">Featured</span><% } %>
+          <span class="b"><%= listing.category %></span>
+          <span class="b"><%= listing.purpose %></span>
+        </div>
+        <h1 style="margin-bottom:8px"><%= listing.title %></h1>
+        <p class="modalLocation"><%= listing.location?.area %>, <%= listing.location?.city %></p>
+        <div class="priceLine modalPrice"><strong><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %></strong><span><%= listing.price?.unit === 'one-time' ? 'One time' : '/' + (listing.price?.unit || 'month') %></span></div>
+        <div class="meta">
+          <% if (listing.specs?.bedrooms) { %><span><%= listing.specs.bedrooms %> bedrooms</span><% } %>
+          <% if (listing.specs?.bathrooms) { %><span><%= listing.specs.bathrooms %> bathrooms</span><% } %>
+          <% if (listing.specs?.sizeSqm) { %><span><%= listing.specs.sizeSqm %> sqm</span><% } %>
+          <% if (listing.specs?.year) { %><span><%= listing.specs.year %></span><% } %>
+          <% if (listing.specs?.mileage) { %><span><%= listing.specs.mileage %> km</span><% } %>
+        </div>
+        <p><%= listing.description %></p>
+        <% if (listing.amenities && listing.amenities.length) { %>
+          <h3>Amenities</h3>
+          <div class="pillRow">
+            <% listing.amenities.forEach(item => { %>
+              <span class="pill"><%= item %></span>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <aside class="panel listingShowAside">
+      <h3>Contact owner</h3>
+      <p><strong><%= listing.owner ? (listing.owner.firstName + ' ' + listing.owner.lastName) : 'Owner' %></strong></p>
+      <p class="subtle"><%= listing.owner?.phone || 'No phone yet' %></p>
+      <form id="inquiryForm" class="filterStack">
+        <input class="input" name="name" placeholder="Your name" value="<%= currentUser ? (currentUser.firstName + ' ' + currentUser.lastName) : '' %>" />
+        <input class="input" name="email" placeholder="Email" value="<%= currentUser ? currentUser.email : '' %>" />
+        <input class="input" name="phone" placeholder="Phone" value="<%= currentUser ? (currentUser.phone || '') : '' %>" />
+        <textarea class="input" name="message" placeholder="I am interested in this listing..." rows="5"></textarea>
+        <button class="btn" type="submit">Send inquiry</button>
+      </form>
+      <div class="divider"></div>
+      <button class="tinyBtn fullBtn" type="button" data-favorite-id="<%= listing._id %>">Save listing</button>
+    </aside>
+  </div>
+</section>
+<script>
+document.querySelectorAll('[data-image-src]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('listingMainImage').src = btn.getAttribute('data-image-src');
+  });
+});
+
+document.getElementById('inquiryForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(this).entries());
+  const id = '<%= listing._id %>';
+  const res = await fetch('/api/inquiries/listing/' + id, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  alert(data.message || (data.success ? 'Inquiry sent' : 'Failed'));
+  if (data.success) this.reset();
+});
+</script>
+<%- include('../../partials/footer') %>

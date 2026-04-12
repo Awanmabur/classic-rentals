@@ -1,0 +1,32 @@
+<article class="card listingCard" data-listing-id="<%= listing._id %>">
+  <div class="thumb">
+    <img src="<%= (listing.images && (listing.images.find(i => i.isPrimary) || listing.images[0])) ? ((listing.images.find(i => i.isPrimary) || listing.images[0]).url) : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop' %>" alt="<%= listing.title %>">
+    <div class="badgeRow">
+      <% if (listing.verified) { %><span class="b ok">Verified</span><% } %>
+      <% if (listing.featured) { %><span class="b feat">Featured</span><% } %>
+      <% if (listing.createdAt && (Date.now() - new Date(listing.createdAt).getTime()) < 1000*60*60*24*7) { %><span class="b new">New</span><% } %>
+    </div>
+  </div>
+  <div class="cardBody">
+    <div class="titleRow">
+      <h3><%= listing.title %></h3>
+      <button class="fav <%= (favoriteIds || []).includes(String(listing._id)) ? 'active' : '' %>" type="button" data-favorite-id="<%= listing._id %>" aria-label="Toggle favorite">♥</button>
+    </div>
+    <div class="meta">
+      <span><%= listing.category %></span>
+      <span><%= listing.location?.area %></span>
+      <% if (listing.specs?.bedrooms) { %><span><%= listing.specs.bedrooms %> bed</span><% } %>
+      <% if (listing.specs?.bathrooms) { %><span><%= listing.specs.bathrooms %> bath</span><% } %>
+    </div>
+    <div class="priceRow">
+      <div>
+        <div class="price"><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %></div>
+        <div class="per"><%= listing.price?.unit === 'one-time' ? 'One time' : '/' + (listing.price?.unit || 'month') %></div>
+      </div>
+      <div class="row actionRow">
+        <button class="tinyBtn" type="button" data-open-listing="<%= listing._id %>">Quick view</button>
+        <a class="tinyBtn primaryGhost" href="/listings/<%= listing.slug %>">Open</a>
+      </div>
+    </div>
+  </div>
+</article>

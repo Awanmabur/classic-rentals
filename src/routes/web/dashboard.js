@@ -1,0 +1,37 @@
+
+const express = require('express');
+const controller = require('../../controllers/web/dashboardPageController');
+const { authenticateRequired } = require('../../middlewares/auth');
+
+const router = express.Router();
+router.use(authenticateRequired);
+router.get('/', controller.index);
+router.get('/analytics', controller.analytics);
+router.get('/manage-listings', controller.manageListings);
+router.get('/manage-listings/:id', controller.listingShow);
+router.post('/manage-listings/bulk', controller.bulkListingAction);
+router.post('/manage-listings/:id/moderate', controller.moderateListingAction);
+router.post('/manage-listings/:id/assign-agent', controller.assignAgentAction);
+router.get('/inquiries', controller.inquiries);
+router.get('/inquiries/:id', controller.inquiryShow);
+router.post('/inquiries/:id/status', controller.updateInquiryStatusAction);
+router.get('/reports', controller.reports);
+router.get('/reports/:id', controller.reportShow);
+router.post('/reports/:id/resolve', controller.resolveReportAction);
+router.get('/users', controller.users);
+router.get('/users/:id', controller.userShow);
+router.post('/users/:id/update', controller.updateUserAction);
+router.get('/settings', controller.settings);
+router.post('/settings', controller.upsertSettingAction);
+router.get('/audit-logs', controller.auditLogs);
+router.get('/favorites', controller.favorites);
+router.get('/profile', controller.profile);
+router.get('/billing', controller.billing);
+router.post('/billing/start', controller.startSubscriptionAction);
+router.post('/billing/cancel', controller.cancelSubscriptionAction);
+router.post('/profile', controller.updateProfileAction);
+router.post('/profile/password', controller.changePasswordAction);
+router.get('/reviews', controller.reviews);
+router.get('/reviews/:id', controller.reviewShow);
+router.post('/reviews/:id/moderate', controller.moderateReviewAction);
+module.exports = router;

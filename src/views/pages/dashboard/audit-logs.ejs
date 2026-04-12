@@ -1,0 +1,78 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Audit Logs</h2><p>Track system actions, actor activity, and entity changes with the same clean dashboard filters.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= (pagination?.total || logs.length).toLocaleString() %></h5><p>Total logs</p></div>
+      <div class="metric-box"><h5><%= logs.filter(item => item.actor).length %></h5><p>User actions</p></div>
+      <div class="metric-box"><h5><%= logs.filter(item => !item.actor).length %></h5><p>System actions</p></div>
+      <div class="metric-box"><h5><%= [...new Set(logs.map(item => item.entityType).filter(Boolean))].length %></h5><p>Entity types</p></div>
+    </section>
+
+    <section class="card toolbar-card">
+      <form class="filter-grid-4" method="get" action="/dashboard/audit-logs">
+        <div class="field">
+          <label for="auditQ">Search</label>
+          <input id="auditQ" type="text" name="q" value="<%= filters?.q || '' %>" placeholder="Action or entity">
+        </div>
+        <div class="field">
+          <label for="auditAction">Action</label>
+          <input id="auditAction" type="text" name="action" value="<%= filters?.action || '' %>" placeholder="dashboard.listing.bulk">
+        </div>
+        <div class="field">
+          <label for="auditEntity">Entity type</label>
+          <select id="auditEntity" name="entityType">
+            <option value="">All entities</option>
+            <% ['Listing','Inquiry','Review','Report','User','Setting','Subscription'].forEach(entity => { %>
+              <option value="<%= entity %>" <%= filters?.entityType === entity ? 'selected' : '' %>><%= entity %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field-inline">
+          <button class="primary-btn stretch-btn" type="submit">Apply filters</button>
+          <a class="ghost-btn stretch-btn" href="/dashboard/audit-logs">Reset</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead><tr><th>Actor</th><th>Action</th><th>Entity</th><th>When</th></tr></thead>
+          <tbody>
+            <% logs.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.actor ? `${item.actor.firstName} ${item.actor.lastName}` : 'System' %></strong>
+                    <span><%= item.actor?.email || 'Automated process' %></span>
+                  </div>
+                </td>
+                <td><strong><%= item.action %></strong></td>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.entityType || '-' %></strong>
+                    <span><%= item.entityId || '-' %></span>
+                  </div>
+                </td>
+                <td><%= new Date(item.createdAt).toLocaleString() %></td>
+              </tr>
+            <% }) %>
+            <% if (!logs.length) { %><tr><td colspan="4">No audit logs found.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, filters }) %>
+    </section>
+  </main>
+</div>
+</body></html>

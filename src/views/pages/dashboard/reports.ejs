@@ -1,0 +1,90 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Reports</h2><p>Review flagged listings, filter cases quickly, and open full moderation details in the same clean dashboard flow.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= (pagination?.total || reports.length).toLocaleString() %></h5><p>Total reports</p></div>
+      <div class="metric-box"><h5><%= reports.filter(item => item.status === 'open').length %></h5><p>Open cases</p></div>
+      <div class="metric-box"><h5><%= reports.filter(item => item.status === 'reviewing').length %></h5><p>Reviewing</p></div>
+      <div class="metric-box"><h5><%= reports.filter(item => item.status === 'resolved').length %></h5><p>Resolved</p></div>
+    </section>
+
+    <section class="card toolbar-card">
+      <form class="filter-grid-4" method="get" action="/dashboard/reports">
+        <div class="field">
+          <label for="reportQ">Search</label>
+          <input id="reportQ" type="text" name="q" value="<%= filters?.q || '' %>" placeholder="Details or note">
+        </div>
+        <div class="field">
+          <label for="reportStatus">Status</label>
+          <select id="reportStatus" name="status">
+            <option value="">All statuses</option>
+            <% ['open','reviewing','resolved'].forEach(s => { %>
+              <option value="<%= s %>" <%= filters?.status === s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="reportReason">Reason</label>
+          <select id="reportReason" name="reason">
+            <option value="">All reasons</option>
+            <% ['spam','fraud','duplicate','wrong-price','wrong-location','abuse','other'].forEach(reason => { %>
+              <option value="<%= reason %>" <%= filters?.reason === reason ? 'selected' : '' %>><%= reason %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field-inline">
+          <button class="primary-btn stretch-btn" type="submit">Apply filters</button>
+          <a class="ghost-btn stretch-btn" href="/dashboard/reports">Reset</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead><tr><th>Listing</th><th>Reason</th><th>Reporter</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody>
+            <% reports.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.listing?.title || '-' %></strong>
+                    <span><%= item.listing?.slug || 'No listing slug' %></span>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.reason %></strong>
+                    <span><%= item.details || 'No extra details' %></span>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.reporter ? `${item.reporter.firstName} ${item.reporter.lastName}` : 'Anonymous' %></strong>
+                    <span><%= item.reporter?.email || '-' %></span>
+                  </div>
+                </td>
+                <td><span class="status soft <%= item.status === 'resolved' ? 'resolved' : item.status === 'reviewing' ? 'reviewing' : 'pending' %>"><%= item.status %></span></td>
+                <td><%= new Date(item.createdAt).toLocaleString() %></td>
+                <td><div class="table-actions-row"><a class="tiny-btn" href="/dashboard/reports/<%= item._id %>">Open</a></div></td>
+              </tr>
+            <% }) %>
+            <% if (!reports.length) { %><tr><td colspan="6">No reports found.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, filters }) %>
+    </section>
+  </main>
+</div>
+</body></html>

@@ -1,0 +1,21 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Review Details</h2><p>Open a single review in the new dashboard page system.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/reviews">Back</a></div>
+    </section>
+    
+<section class="dashboard-grid">
+  <div class="card"><div class="section-head"><div><h4>Review</h4><span>Single moderation record</span></div><span class="status <%= review.status === 'published' ? 'published' : review.status === 'pending' ? 'pending' : 'vacant' %>"><%= review.status %></span></div><p><strong>Rating:</strong> <%= review.rating %>/5</p><p><%= review.comment || 'No comment provided.' %></p><div class="actionRow"><a class="tiny-btn" href="/listings/<%= review.listing?.slug %>">View listing</a></div></div>
+  <div class="stack"><div class="card"><div class="section-head"><div><h4>Reviewer</h4><span>User details</span></div></div><p><strong><%= review.user ? `${review.user.firstName} ${review.user.lastName}` : '-' %></strong><br><span class="muted"><%= review.user?.email || '-' %></span></p></div><% if (adminView) { %><div class="card"><form class="filter-row" method="post" action="/dashboard/reviews/<%= review._id %>/moderate"><% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %><select name="status"><% ['pending','published','rejected'].forEach(s=>{ %><option value="<%= s %>" <%= review.status===s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="primary-btn" type="submit">Update review</button></form></div><% } %></div>
+</section>
+
+  </main>
+</div>
+</body></html>

@@ -1,0 +1,72 @@
+<header class="siteHeader">
+  <div class="topbar">
+    <div class="wrap topbarRow">
+      <div class="row topbarLeft">
+        <span class="chip"><span class="dot"></span> Verified listings updated daily</span>
+        <span class="chip desktopOnly">Cars • Homes • Land • Commercial</span>
+      </div>
+      <div class="topLinks desktopOnly">
+        <a class="link" href="/listings?category=car">Cars</a>
+        <a class="link" href="/listings?category=house">Houses</a>
+        <a class="link" href="/listings?category=land">Land</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="navWrap">
+    <div class="wrap navRow">
+      <a class="brandBlock" href="/">
+        <span class="brandLogo">CR</span>
+        <span>
+          <strong>Classic Rentals</strong>
+          <small>Premium property & mobility</small>
+        </span>
+      </a>
+
+      <nav class="navLinks desktopNav">
+        <a href="/">Home</a>
+        <a href="/listings">Browse</a>
+        <% if (currentUser) { %>
+          <a href="/listings/manage">Manage listings</a>
+          <a href="/dashboard">Dashboard</a>
+        <% } %>
+      </nav>
+
+      <div class="navActions">
+        <button id="themeToggle" class="iconBtn" type="button" aria-label="Toggle theme">◐</button>
+        <% if (currentUser) { %>
+          <a class="btn alt desktopOnly" href="/listings/create">Post listing</a>
+          <button class="btn" id="logoutBtn" type="button">Logout</button>
+        <% } else { %>
+          <a class="btn alt desktopOnly" href="/auth/login">Login</a>
+          <a class="btn desktopOnly" href="/auth/register">Create account</a>
+        <% } %>
+        <button id="mobileMenuBtn" class="iconBtn mobileOnly" type="button" aria-label="Open menu">☰</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobileMenu" id="mobileMenu">
+    <div class="wrap mobileMenuInner">
+      <a href="/">Home</a>
+      <a href="/listings">Browse listings</a>
+      <% if (currentUser) { %>
+        <a href="/listings/create">Post listing</a>
+        <a href="/listings/manage">Manage listings</a>
+        <a href="/dashboard">Dashboard</a>
+        <button class="btn" id="logoutBtnMobile" type="button">Logout</button>
+      <% } else { %>
+        <a href="/auth/login">Login</a>
+        <a href="/auth/register">Create account</a>
+      <% } %>
+    </div>
+  </div>
+</header>
+<script>
+document.addEventListener('click', async function(e){
+  if(e.target && (e.target.id === 'logoutBtn' || e.target.id === 'logoutBtnMobile')){
+    await fetch('/api/auth/logout',{method:'POST'});
+    location.href = '/';
+  }
+});
+</script>

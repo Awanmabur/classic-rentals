@@ -1,0 +1,22 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Users</h2><p>Manage user roles and statuses in the new uploaded dashboard style.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+    
+<section class="card"><form class="filter-row" method="get" action="/dashboard/users"><input name="q" placeholder="Search name or email" value="<%= filters?.q || '' %>"><select name="role"><option value="">All roles</option><% ['super-admin','admin','agent','user'].forEach(s=>{ %><option value="<%= s %>" <%= filters?.role===s ? 'selected' : '' %>><%= s %></option><% }) %></select><select name="status"><option value="">All statuses</option><% ['active','pending','suspended'].forEach(s=>{ %><option value="<%= s %>" <%= filters?.status===s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="primary-btn" type="submit">Apply</button></form></section>
+<section class="card"><div class="table-shell"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th></tr></thead><tbody>
+<% users.forEach(item => { %><tr><td><strong><%= item.firstName %> <%= item.lastName %></strong><br><span class="muted"><%= item.email %></span></td><td><%= item.role %></td><td><span class="status <%= item.status === 'active' ? 'published' : item.status === 'pending' ? 'pending' : 'vacant' %>"><%= item.status %></span></td><td><%= new Date(item.createdAt).toLocaleDateString() %></td><td><a class="tiny-btn" href="/dashboard/users/<%= item._id %>">Open</a></td></tr><% }) %>
+<% if (!users.length) { %><tr><td colspan="5">No users found.</td></tr><% } %>
+</tbody></table></div><%- include('../../partials/pagination', { pagination, filters }) %></section>
+
+  </main>
+</div>
+</body></html>

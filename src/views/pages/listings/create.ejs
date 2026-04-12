@@ -1,0 +1,182 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="card dashboardFormShell listingWizardShell">
+      <div class="dashboardTopbar listingWizardTopbar">
+        <div class="dashboardTitle">
+          <h1>Create listing</h1>
+          <p>Publish a new property, vehicle, land, or commercial space using a guided step-by-step workspace.</p>
+        </div>
+        <div class="topbarActions listingWizardActions">
+          <a class="dashGhostBtn" href="/dashboard/manage-listings">Manage listings</a>
+          <a class="dashGhostBtn" href="/listings/manage">Public listing manager</a>
+          <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">☰</button>
+        </div>
+      </div>
+
+      <div class="listingWizardProgressRow">
+        <button class="wizardStepChip active" type="button" data-step-target="0"><span>1</span> Basics</button>
+        <button class="wizardStepChip" type="button" data-step-target="1"><span>2</span> Pricing & location</button>
+        <button class="wizardStepChip" type="button" data-step-target="2"><span>3</span> Features</button>
+        <button class="wizardStepChip" type="button" data-step-target="3"><span>4</span> Media & publish</button>
+        <div class="wizardStatusBox">
+          <strong id="autosaveStatus">Autosave ready</strong>
+          <small>Your draft is saved in this browser as you fill each step.</small>
+        </div>
+      </div>
+
+      <form class="tableCard dashboardFormCard listingWizardForm" action="/listings/create" method="post" enctype="multipart/form-data" id="listingWizardForm" data-autosave-key="juba-create-listing-draft">
+        <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+
+        <section class="wizardPanel active" data-step="0">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Listing basics</h3>
+              <p class="muted" style="margin:6px 0 0">Start with the main identity of the listing.</p>
+            </div>
+            <span class="badgeSoft">Step 1 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label>Title
+              <input class="input" name="title" value="<%= old?.title || '' %>" required>
+              <% if (formErrors?.title) { %><small style="color:#dc2626"><%= formErrors.title %></small><% } %>
+            </label>
+            <label>Category
+              <select class="input" name="category" required>
+                <option value="">Select</option>
+                <% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(c=>{ %>
+                  <option value="<%= c %>" <%= old?.category===c?'selected':'' %>><%= c %></option>
+                <% }) %>
+              </select>
+              <% if (formErrors?.category) { %><small style="color:#dc2626"><%= formErrors.category %></small><% } %>
+            </label>
+            <label>Purpose
+              <select class="input" name="purpose">
+                <option value="rent" <%= old?.purpose==='sale' ? '' : 'selected' %>>Rent</option>
+                <option value="sale" <%= old?.purpose==='sale'?'selected':'' %>>Sale</option>
+              </select>
+            </label>
+            <label>City
+              <input class="input" name="city" value="<%= old?.city || 'Juba' %>">
+            </label>
+          </div>
+        </section>
+
+        <section class="wizardPanel" data-step="1">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Pricing and location</h3>
+              <p class="muted" style="margin:6px 0 0">Set where it is and how it should be priced.</p>
+            </div>
+            <span class="badgeSoft">Step 2 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label>Price
+              <input class="input" type="number" name="priceAmount" value="<%= old?.priceAmount || '' %>" min="0" required>
+              <% if (formErrors?.priceAmount) { %><small style="color:#dc2626"><%= formErrors.priceAmount %></small><% } %>
+            </label>
+            <label>Currency
+              <input class="input" name="currency" value="<%= old?.currency || 'USD' %>">
+            </label>
+            <label>Price unit
+              <select class="input" name="priceUnit">
+                <% ['day','month','year','one-time'].forEach(u=>{ %>
+                  <option value="<%= u %>" <%= old?.priceUnit===u?'selected':'' %>><%= u %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Area
+              <input class="input" name="area" value="<%= old?.area || '' %>" required>
+              <% if (formErrors?.area) { %><small style="color:#dc2626"><%= formErrors.area %></small><% } %>
+            </label>
+            <label>Address
+              <input class="input" name="addressLine" value="<%= old?.addressLine || '' %>">
+            </label>
+            <label>Latitude
+              <input class="input" name="latitude" value="<%= old?.latitude || '' %>">
+              <% if (formErrors?.latitude) { %><small style="color:#dc2626"><%= formErrors.latitude %></small><% } %>
+            </label>
+            <label>Longitude
+              <input class="input" name="longitude" value="<%= old?.longitude || '' %>">
+              <% if (formErrors?.longitude) { %><small style="color:#dc2626"><%= formErrors.longitude %></small><% } %>
+            </label>
+          </div>
+        </section>
+
+        <section class="wizardPanel" data-step="2">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Property features</h3>
+              <p class="muted" style="margin:6px 0 0">Add the information buyers and renters scan first.</p>
+            </div>
+            <span class="badgeSoft">Step 3 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label>Bedrooms
+              <input class="input" type="number" name="bedrooms" value="<%= old?.bedrooms || '' %>">
+            </label>
+            <label>Bathrooms
+              <input class="input" type="number" name="bathrooms" value="<%= old?.bathrooms || '' %>">
+            </label>
+            <label>Size sqm
+              <input class="input" type="number" name="sizeSqm" value="<%= old?.sizeSqm || '' %>">
+            </label>
+            <label>Year
+              <input class="input" type="number" name="year" value="<%= old?.year || '' %>">
+            </label>
+            <label>Fuel type
+              <input class="input" name="fuelType" value="<%= old?.fuelType || '' %>">
+            </label>
+            <label>Transmission
+              <input class="input" name="transmission" value="<%= old?.transmission || '' %>">
+            </label>
+            <label>Amenities
+              <input class="input" name="amenities" value="<%= old?.amenities || '' %>" placeholder="Parking, Wi-Fi, security, garden...">
+            </label>
+          </div>
+        </section>
+
+        <section class="wizardPanel" data-step="3">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Media and publish</h3>
+              <p class="muted" style="margin:6px 0 0">Finish with visuals and the full marketing description.</p>
+            </div>
+            <span class="badgeSoft">Step 4 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label class="listingWizardWide">Images
+              <input class="input" type="file" name="images" accept="image/*" multiple>
+            </label>
+            <label class="listingWizardWide">Description
+              <textarea class="input" name="description" rows="7" required><%= old?.description || '' %></textarea>
+              <% if (formErrors?.description) { %><small style="color:#dc2626"><%= formErrors.description %></small><% } %>
+            </label>
+          </div>
+
+          <div class="listingWizardReview">
+            <div class="mini-stat"><small>Checklist</small><strong>Ready to publish</strong></div>
+            <div class="mini-stat"><small>Draft saving</small><strong>Enabled</strong></div>
+            <div class="mini-stat"><small>Route</small><strong>/listings/create</strong></div>
+          </div>
+        </section>
+
+        <div class="formActionRow listingWizardFooter">
+          <button class="btn alt" type="button" id="wizardPrevBtn">Previous</button>
+          <div class="listingWizardFooterRight">
+            <button class="btn alt" type="button" id="wizardNextBtn">Next section</button>
+            <button class="btn" type="submit" id="wizardSubmitBtn">Create listing</button>
+            <a class="btn alt" href="/dashboard/manage-listings">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+<script defer src="/js/listing-wizard.js"></script>
+</body></html>

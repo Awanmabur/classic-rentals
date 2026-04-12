@@ -1,0 +1,7 @@
+<% if (pagination && pagination.pages > 1) { %>
+<nav class="pager">
+  <% for (let p = 1; p <= pagination.pages; p++) { %>
+    <a class="<%= p === pagination.page ? 'active' : '' %>" href="?<%= Object.entries(filters || {}).filter(([k,v]) => k !== 'page' && v).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&') %><%= Object.keys(filters || {}).filter(k => filters[k] && k !== 'page').length ? '&' : '' %>page=<%= p %>"><%= p %></a>
+  <% } %>
+</nav>
+<% } %>

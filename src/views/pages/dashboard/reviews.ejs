@@ -1,0 +1,83 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Reviews</h2><p>Moderate feedback, watch rating quality, and open full review details in the same clean workspace.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= (pagination?.total || reviews.length).toLocaleString() %></h5><p>Total reviews</p></div>
+      <div class="metric-box"><h5><%= reviews.filter(r => r.status === 'pending').length %></h5><p>Pending moderation</p></div>
+      <div class="metric-box"><h5><%= reviews.filter(r => r.status === 'published').length %></h5><p>Published</p></div>
+      <div class="metric-box"><h5><%= reviews.length ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1) : '0.0' %></h5><p>Average rating</p></div>
+    </section>
+
+    <section class="card toolbar-card">
+      <form class="filter-grid-4" method="get" action="/dashboard/reviews">
+        <div class="field">
+          <label for="reviewQ">Search</label>
+          <input id="reviewQ" type="text" name="q" value="<%= filters?.q || '' %>" placeholder="Comment or listing title">
+        </div>
+        <div class="field">
+          <label for="reviewStatus">Status</label>
+          <select id="reviewStatus" name="status">
+            <option value="">All statuses</option>
+            <% ['pending','published','rejected'].forEach(s=>{ %>
+              <option value="<%= s %>" <%= filters?.status===s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="reviewRating">Rating</label>
+          <select id="reviewRating" name="rating">
+            <option value="">All ratings</option>
+            <% [5,4,3,2,1].forEach(n => { %>
+              <option value="<%= n %>" <%= String(filters?.rating || '') === String(n) ? 'selected' : '' %>><%= n %> stars</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field-inline">
+          <button class="primary-btn stretch-btn" type="submit">Apply filters</button>
+          <a class="ghost-btn stretch-btn" href="/dashboard/reviews">Reset</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead><tr><th>Listing</th><th>Rating</th><th>Comment</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <% reviews.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.listing?.title || '-' %></strong>
+                    <span><%= item.listing?.slug || 'No listing slug' %></span>
+                  </div>
+                </td>
+                <td><strong><%= item.rating %>/5</strong></td>
+                <td><span class="muted"><%= item.comment || 'No comment' %></span></td>
+                <td><span class="status soft <%= item.status === 'published' ? 'published' : item.status === 'pending' ? 'pending' : 'vacant' %>"><%= item.status %></span></td>
+                <td>
+                  <div class="table-actions-row">
+                    <a class="tiny-btn" href="/dashboard/reviews/<%= item._id %>">Open</a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (!reviews.length) { %><tr><td colspan="5">No reviews found.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, filters }) %>
+    </section>
+  </main>
+</div>
+</body></html>

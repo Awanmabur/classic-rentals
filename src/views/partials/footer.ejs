@@ -1,0 +1,50 @@
+<footer class="footer">
+  <div class="wrap footerGrid">
+    <div>
+      <div class="brandBlock footerBrand">
+        <span class="brandLogo">CR</span>
+        <span>
+          <strong>Classic Rentals</strong>
+          <small>Premium rentals platform</small>
+        </span>
+      </div>
+      <p class="footerCopy">Cars, houses, land, shops, offices and short-stays in Juba with a faster, cleaner and more trusted search experience.</p>
+      <div class="pillRow">
+        <span class="pill">Verified listings</span>
+        <span class="pill">Agent-ready</span>
+        <span class="pill">Mobile friendly</span>
+      </div>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <p><a href="/listings">All listings</a></p>
+      <p><a href="/listings?category=house">Houses</a></p>
+      <p><a href="/listings?category=car">Cars</a></p>
+      <p><a href="/listings?category=land">Land</a></p>
+    </div>
+    <div>
+      <h4>Account</h4>
+      <% if (currentUser) { %>
+        <p><a href="/dashboard">Dashboard</a></p>
+        <p><a href="/listings/create">Post listing</a></p>
+        <p><a href="/listings/manage">Manage listings</a></p>
+      <% } else { %>
+        <p><a href="/auth/login">Login</a></p>
+        <p><a href="/auth/register">Register</a></p>
+      <% } %>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p><a href="tel:+211000000000">+211 000 000 000</a></p>
+      <p><a href="mailto:info@classicrentals.com">info@classicrentals.com</a></p>
+      <p>Juba, South Sudan</p>
+    </div>
+  </div>
+  <div class="wrap footerBottom">
+    <p>© <%= year %> Classic Rentals. All rights reserved.</p>
+  </div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="/js/home.js"></script>
+</footer>
+</body>
+</html>

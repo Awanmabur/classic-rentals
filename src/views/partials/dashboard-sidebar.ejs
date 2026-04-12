@@ -1,0 +1,50 @@
+<%
+  const roleLabel = (currentUser.role || 'member').replace(/-/g, ' ');
+  const active = (path) => currentPath === path || (path !== '/dashboard' && currentPath && currentPath.startsWith(path)) ? 'active' : '';
+  const displayName = (currentUser.fullName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Classic User').trim();
+  const firstName = currentUser.firstName || displayName.split(' ')[0] || 'User';
+  const initial = (displayName.charAt(0) || 'C').toUpperCase();
+%>
+<div class="sidebar-tooltip" id="sidebarTooltip"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div class="brand">
+      <div class="brand-logo">CR</div>
+      <div class="brand-text">
+        <h1>Classic Rentals</h1>
+        <p><%= roleLabel %> workspace</p>
+      </div>
+    </div>
+    <button class="collapse-btn" id="collapseBtn" aria-label="Toggle sidebar">&lt;</button>
+  </div>
+  <div class="nav-group">
+    <div class="nav-title">Main</div>
+    <a class="nav-link <%= active('/dashboard') && currentPath === '/dashboard' ? 'active' : '' %>" href="/dashboard" data-label="Dashboard"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></a>
+    <a class="nav-link <%= active('/dashboard/analytics') %>" href="/dashboard/analytics" data-label="Analytics"><span class="nav-icon">◔</span><span class="nav-label">Analytics</span></a>
+    <a class="nav-link <%= active('/dashboard/manage-listings') %>" href="/dashboard/manage-listings" data-label="Listings"><span class="nav-icon">▣</span><span class="nav-label">Listings</span></a>
+    <a class="nav-link <%= active('/dashboard/inquiries') %>" href="/dashboard/inquiries" data-label="Inquiries"><span class="nav-icon">✉</span><span class="nav-label">Inquiries</span></a>
+    <a class="nav-link <%= active('/dashboard/reviews') %>" href="/dashboard/reviews" data-label="Reviews"><span class="nav-icon">★</span><span class="nav-label">Reviews</span></a>
+    <a class="nav-link <%= active('/dashboard/profile') %>" href="/dashboard/profile" data-label="Profile"><span class="nav-icon">☺</span><span class="nav-label">Profile</span></a>
+    <% if (currentUser.role === 'user') { %><a class="nav-link <%= active('/dashboard/favorites') %>" href="/dashboard/favorites" data-label="Favorites"><span class="nav-icon">♥</span><span class="nav-label">Favorites</span></a><% } %>
+    <% if (['agent','admin','super-admin'].includes(currentUser.role)) { %><a class="nav-link <%= active('/listings/create') %>" href="/listings/create" data-label="Create Listing"><span class="nav-icon">＋</span><span class="nav-label">Create Listing</span></a><% } %>
+  </div>
+  <div class="nav-group">
+    <div class="nav-title">Workspace</div>
+    <% if (['admin','super-admin'].includes(currentUser.role)) { %><a class="nav-link <%= active('/dashboard/users') %>" href="/dashboard/users" data-label="Users"><span class="nav-icon">◉</span><span class="nav-label">Users</span></a><% } %>
+    <a class="nav-link <%= active('/dashboard/reports') %>" href="/dashboard/reports" data-label="Reports"><span class="nav-icon">⚑</span><span class="nav-label"><%= ['admin','super-admin'].includes(currentUser.role) ? 'Reports' : 'My Reports' %></span></a>
+    <a class="nav-link <%= active('/dashboard/billing') %>" href="/dashboard/billing" data-label="Billing"><span class="nav-icon">🧾</span><span class="nav-label">Billing</span></a>
+    <% if (['admin','super-admin'].includes(currentUser.role)) { %>
+      <a class="nav-link <%= active('/dashboard/audit-logs') %>" href="/dashboard/audit-logs" data-label="Audit Logs"><span class="nav-icon">☰</span><span class="nav-label">Audit Logs</span></a>
+      <a class="nav-link <%= active('/dashboard/settings') %>" href="/dashboard/settings" data-label="Settings"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></a>
+    <% } %>
+    <a class="nav-link <%= active('/listings') %>" href="/listings" data-label="Browse Listings"><span class="nav-icon">▤</span><span class="nav-label">Browse Listings</span></a>
+    <a class="nav-link <%= currentPath === '/' ? 'active' : '' %>" href="/" data-label="Home"><span class="nav-icon">↗</span><span class="nav-label">Home</span></a>
+    <button class="nav-link" id="sidebarThemeBtn" data-label="Dark Mode" type="button"><span class="nav-icon">◐</span><span class="nav-label">Dark Mode</span></button>
+  </div>
+  <div class="sidebar-card">
+    <div class="chip">★ New Dashboard UI</div>
+    <h3>Welcome, <%= firstName %></h3>
+    <p>Every dashboard page now uses the new uploaded interface, real project routes, and live records from the database.</p>
+    <a href="/dashboard"><button type="button">Open dashboard</button></a>
+  </div>
+</aside>

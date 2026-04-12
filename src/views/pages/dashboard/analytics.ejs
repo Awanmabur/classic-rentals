@@ -1,0 +1,107 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Analytics</h2><p>Review listing performance, growth patterns, and category distribution in the new UI.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/manage-listings">Open listings</a></div>
+    </section>
+
+<%
+  const total = Number(totals?.totalListings || 0);
+  const published = Number(totals?.publishedListings || 0);
+  const pending = Number(totals?.pendingListings || 0);
+  const favs = Number(totals?.totalFavorites || 0);
+  const inquiryCount = Number(totals?.totalInquiries || 0);
+  const categoryMax = Math.max(1, ...((categories || []).map(item => item.count || 0)));
+  const timelineMax = Math.max(1, ...((timeline || []).map(item => item.count || 0)));
+  const publishedRate = total ? Math.round((published / total) * 100) : 0;
+  const pendingRate = total ? Math.round((pending / total) * 100) : 0;
+%>
+
+<section class="metric-strip compact-metrics analyticsCompactStats">
+  <div class="metric-box"><h5><%= total.toLocaleString() %></h5><p>Total listings</p></div>
+  <div class="metric-box"><h5><%= published.toLocaleString() %></h5><p>Published</p></div>
+  <div class="metric-box"><h5><%= pending.toLocaleString() %></h5><p>Pending</p></div>
+  <div class="metric-box"><h5><%= inquiryCount.toLocaleString() %></h5><p>Inquiries</p></div>
+</section>
+
+<section class="dashboard-grid analyticsPageGrid analyticsPageGridTight">
+  <div class="card analyticsVisualCard">
+    <div class="section-head"><div><h4>Listing Growth</h4><span>Real timeline from recent listing activity</span></div></div>
+    <div class="chartCanvasWrap largeChart">
+      <canvas id="listingGrowthChart" class="simpleChart" data-chart-type="line" data-labels='<%- JSON.stringify((timeline || []).map(item => item.date)) %>' data-values='<%- JSON.stringify((timeline || []).map(item => Number(item.count || 0))) %>'></canvas>
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card analyticsVisualCard compactCard">
+      <div class="section-head"><div><h4>Publishing Mix</h4><span>Published vs pending vs other</span></div></div>
+      <div class="chartCanvasWrap donutChartWrap">
+        <canvas id="publishingMixChart" class="simpleChart" data-chart-type="donut" data-labels='["Published","Pending","Other"]' data-values='[<%= published %>,<%= pending %>,<%= Math.max(total - published - pending, 0) %>]'></canvas>
+      </div>
+      <div class="metricMiniGrid analyticsMiniGridTwo">
+        <div class="metricMini"><strong><%= publishedRate %>%</strong><span>Published rate</span></div>
+        <div class="metricMini"><strong><%= pendingRate %>%</strong><span>Pending rate</span></div>
+        <div class="metricMini"><strong><%= favs.toLocaleString() %></strong><span>Favorites</span></div>
+      </div>
+    </div>
+    <div class="card analyticsVisualCard compactCard">
+      <div class="section-head"><div><h4>Category Breakdown</h4><span>Distribution by listing type</span></div></div>
+      <div class="chartCanvasWrap mediumChart">
+        <canvas id="categoryBreakdownChart" class="simpleChart" data-chart-type="bar" data-labels='<%- JSON.stringify((categories || []).map(item => item._id || "uncategorized")) %>' data-values='<%- JSON.stringify((categories || []).map(item => Number(item.count || 0))) %>'></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cards-grid analyticsDetailsGrid">
+  <div class="card">
+    <div class="section-head"><div><h4>Category Mix</h4><span>Quick readable breakdown</span></div></div>
+    <div class="stack">
+      <% if ((categories || []).length) { %>
+        <% categories.forEach(item => { %>
+          <div class="progress-row">
+            <div class="progress-label"><span><%= item._id || 'uncategorized' %></span><strong><%= item.count %></strong></div>
+            <div class="progress-bar"><span style="width:<%= Math.max(8, Math.round((item.count / categoryMax) * 100)) %>%"></span></div>
+          </div>
+        <% }) %>
+      <% } else { %><div class="emptyState">No category data yet.</div><% } %>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-head"><div><h4>Recent Listing Activity</h4><span>Daily creation timeline</span></div></div>
+    <div class="stack">
+      <% if ((timeline || []).length) { %>
+        <% timeline.forEach(item => { %>
+          <div class="progress-row">
+            <div class="progress-label"><span><%= item.date %></span><strong><%= item.count %></strong></div>
+            <div class="progress-bar"><span style="width:<%= Math.max(8, Math.round((item.count / timelineMax) * 100)) %>%"></span></div>
+          </div>
+        <% }) %>
+      <% } else { %><div class="emptyState">No activity recorded yet.</div><% } %>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-head"><div><h4>Performance Notes</h4><span>Simple guidance from live totals</span></div></div>
+    <div class="page-banner">
+      <h3><%= published >= pending ? 'Publishing is healthy' : 'Pending reviews need attention' %></h3>
+      <p>
+        <% if (total === 0) { %>
+          Start by creating listings so analytics can show growth, conversion, and publishing trends.
+        <% } else if (published >= pending) { %>
+          Most visible inventory is already published. Focus next on improving favorites and inquiry conversion.
+        <% } else { %>
+          You have more pending than healthy visible stock. Review moderation and complete missing listing information.
+        <% } %>
+      </p>
+    </div>
+  </div>
+</section>
+
+  </main>
+</div>
+</body></html>

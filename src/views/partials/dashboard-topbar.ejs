@@ -1,0 +1,22 @@
+<section class="deskTopbar">
+  <div class="deskTopbarWelcome">
+    <h2><%= title || 'Dashboard' %></h2>
+    <p>Welcome back, <%= (currentUser.firstName || currentUser.fullName || 'User').split(' ')[0] %></p>
+  </div>
+  <div class="deskTopbarSearch">
+    <span class="deskSearchIcon">⌕</span>
+    <input type="text" placeholder="Search anything" aria-label="Search anything">
+  </div>
+  <div class="deskTopbarActions">
+    <button class="deskIconBtn" type="button" aria-label="Messages">💬</button>
+    <button class="deskIconBtn" type="button" aria-label="Notifications">🔔</button>
+    <a class="deskProfileChip" href="/dashboard/profile">
+      <span class="deskProfileAvatar"><%= ((currentUser.fullName || currentUser.firstName || 'C').trim().charAt(0) || 'C').toUpperCase() %></span>
+      <span class="deskProfileMeta">
+        <strong><%= currentUser.firstName || (currentUser.fullName || 'Classic User').split(' ')[0] %></strong>
+        <small><%= (currentUser.role || 'member').replace('-', ' ') %></small>
+      </span>
+    </a>
+    <button class="dashMenuBtn mobileOnlyDash" id="dashboardMenuToggle" type="button" aria-label="Open dashboard menu">☰</button>
+  </div>
+</section>

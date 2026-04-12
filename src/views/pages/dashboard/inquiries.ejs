@@ -1,0 +1,90 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Inquiries</h2><p>See conversations, track follow-up progress, and manage incoming leads in the same clean dashboard flow.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= (pagination?.total || inquiries.length).toLocaleString() %></h5><p>Total inquiries</p></div>
+      <div class="metric-box"><h5><%= inquiries.filter(i => i.status === 'new').length %></h5><p>New leads</p></div>
+      <div class="metric-box"><h5><%= inquiries.filter(i => i.status === 'contacted').length %></h5><p>Contacted</p></div>
+      <div class="metric-box"><h5><%= inquiries.filter(i => i.status === 'closed').length %></h5><p>Closed</p></div>
+    </section>
+
+    <section class="card toolbar-card">
+      <form class="filter-grid-4" method="get" action="/dashboard/inquiries">
+        <div class="field">
+          <label for="inqQ">Search</label>
+          <input id="inqQ" type="text" name="q" value="<%= filters?.q || '' %>" placeholder="Name, email, or message">
+        </div>
+        <div class="field">
+          <label for="inqStatus">Status</label>
+          <select id="inqStatus" name="status">
+            <option value="">All statuses</option>
+            <% ['new','contacted','closed'].forEach(s=>{ %>
+              <option value="<%= s %>" <%= filters?.status===s ? 'selected' : '' %>><%= s %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label for="inqLimit">Rows</label>
+          <select id="inqLimit" name="limit">
+            <% [10,20,30,50].forEach(n => { %>
+              <option value="<%= n %>" <%= String(filters?.limit || 20) === String(n) ? 'selected' : '' %>><%= n %> per page</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field-inline">
+          <button class="primary-btn stretch-btn" type="submit">Apply filters</button>
+          <a class="ghost-btn stretch-btn" href="/dashboard/inquiries">Reset</a>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr><th>Sender</th><th>Listing</th><th>Message</th><th>Status</th><th>Date</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <% inquiries.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.name || (item.sender ? `${item.sender.firstName} ${item.sender.lastName}` : 'Guest') %></strong>
+                    <span><%= item.email || item.sender?.email || '-' %></span>
+                  </div>
+                </td>
+                <td>
+                  <div class="table-title-cell">
+                    <strong><%= item.listing?.title || '-' %></strong>
+                    <span><%= item.listing?.slug || 'No listing slug' %></span>
+                  </div>
+                </td>
+                <td><span class="muted"><%= item.message %></span></td>
+                <td><span class="status soft <%= item.status === 'new' ? 'pending' : item.status === 'contacted' ? 'published' : 'vacant' %>"><%= item.status %></span></td>
+                <td><%= new Date(item.createdAt).toLocaleString() %></td>
+                <td>
+                  <div class="table-actions-row">
+                    <a class="tiny-btn" href="/dashboard/inquiries/<%= item._id %>">Open</a>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (!inquiries.length) { %><tr><td colspan="6">No inquiries found.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+      <%- include('../../partials/pagination', { pagination, filters }) %>
+    </section>
+  </main>
+</div>
+</body></html>

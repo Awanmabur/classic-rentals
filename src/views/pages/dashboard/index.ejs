@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'Dashboard' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #cd7700;
+      --primary-soft: rgba(205, 119, 0, 0.12);
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --info: #2563eb;
+      --shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      --shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.04);
+      --radius-xl: 22px;
+      --radius-lg: 18px;
+      --radius-pill: 999px;
+      --sidebar-w: 252px;
+      --sidebar-mini: 82px;
+    }
+
+    body.dark-mode {
+      --bg: #0b1220;
+      --panel: #111827;
+      --panel-soft: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --line: rgba(148, 163, 184, 0.18);
+      --primary-soft: rgba(205, 119, 0, 0.16);
+      --shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
+      --shadow-soft: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; transition: background .25s ease, color .25s ease; }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    button, input, select, textarea { font: inherit; }
+    .app { min-height: 100vh; background: var(--bg); }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w);
+      background: color-mix(in srgb, var(--panel) 96%, transparent); border-right: 1px solid var(--line);
+      backdrop-filter: blur(12px); display: flex; flex-direction: column; gap: 14px; padding: 14px 10px;
+      overflow-y: auto; overflow-x: visible; z-index: 100; transition: width .25s ease, transform .25s ease;
+      scrollbar-width: thin; scrollbar-color: rgba(156, 163, 175, 0.45) transparent;
+    }
+    body.dark-mode .sidebar { scrollbar-color: rgba(30, 41, 59, .95) rgba(15, 23, 42, .9); }
+    .sidebar::-webkit-scrollbar { width: 8px; }
+    .sidebar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, .45); border-radius: 999px; }
+    body.dark-mode .sidebar::-webkit-scrollbar-track { background: rgba(15, 23, 42, .9); }
+    body.dark-mode .sidebar::-webkit-scrollbar-thumb { background: rgba(30, 41, 59, .95); }
+    .main { margin-left: var(--sidebar-w); min-width: 0; width: calc(100% - var(--sidebar-w)); padding: 14px; display: grid; gap: 14px; transition: margin-left .25s ease, width .25s ease; }
+    .app.sidebar-collapsed .sidebar { width: var(--sidebar-mini); }
+    .app.sidebar-collapsed .main { margin-left: var(--sidebar-mini); width: calc(100% - var(--sidebar-mini)); }
+    .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 0; background: transparent; border-radius: 0; border: 0; box-shadow: none; }
+    .brand-logo { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: var(--primary); color: #fff; font-weight: 800; box-shadow: var(--shadow-soft); flex-shrink: 0; }
+    .brand h1 { font-size: .88rem; line-height: 1.1; white-space: nowrap; }
+    .brand p { margin-top: 2px; color: var(--muted); font-size: .68rem; white-space: nowrap; }
+    .collapse-btn, .menu-btn, .icon-btn, .theme-btn, .view-btn {
+      width: 34px; height: 34px; border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--panel); color: var(--text);
+      display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-soft); transition: .2s ease; flex-shrink: 0;
+    }
+    .collapse-btn:hover, .menu-btn:hover, .icon-btn:hover, .theme-btn:hover, .view-btn:hover, .nav-link:hover, .primary-btn:hover, .ghost-btn:hover { transform: translateY(-1px); }
+    .nav-group { display: grid; gap: 6px; }
+    .nav-title { padding: 0 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; font-size: .66rem; margin-top: 4px; margin-bottom: 2px; }
+    .nav-link {
+      position: relative; width: 100%; border: 0; background: transparent; color: var(--text); display: flex; align-items: center; gap: 9px; min-height: 42px;
+      padding: 7px 10px; border-radius: var(--radius-pill); cursor: pointer; text-align: left; transition: .2s ease;
+    }
+    .nav-link:hover { background: rgba(17, 24, 39, .04); }
+    .nav-link.active { background: rgba(205, 119, 0, .12); color: var(--primary); font-weight: 700; }
+    .nav-icon { width: 30px; height: 30px; border-radius: var(--radius-pill); background: var(--panel); border: 1px solid var(--line); display: grid; place-items: center; box-shadow: var(--shadow-soft); flex-shrink: 0; font-size: 12px; }
+    .nav-label { font-size: .8rem; white-space: nowrap; }
+    .sidebar-card { margin-top: auto; background: #111827; color: #fff; padding: 14px; border-radius: 18px; box-shadow: var(--shadow); border: 1px solid transparent; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: var(--radius-pill); background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.08); font-size: .64rem; margin-bottom: 9px; }
+    .sidebar-card h3 { font-size: .88rem; margin-bottom: 5px; }
+    .sidebar-card p { color: rgba(255,255,255,.74); font-size: .72rem; line-height: 1.55; margin-bottom: 10px; }
+    .primary-btn, .ghost-btn, .sidebar-card button { border: 0; border-radius: var(--radius-pill); padding: 8px 14px; min-height: 36px; font-size: .76rem; font-weight: 700; cursor: pointer; transition: .2s ease; }
+    .primary-btn { color: #fff; background: var(--primary); box-shadow: var(--shadow-soft); }
+    .ghost-btn { color: var(--text); background: var(--panel); border: 1px solid var(--line); }
+    .sidebar-card button { width: 100%; color: #111827; background: #fff; }
+    .topbar { display: grid; grid-template-columns: auto minmax(140px, 1fr) auto; align-items: center; gap: 12px; min-width: 0; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .page-title h2 { font-size: 1.22rem; line-height: 1.1; margin-bottom: 3px; }
+    .page-title p { color: var(--muted); font-size: .76rem; }
+    .menu-btn { display: none; margin-left: auto; }
+    .topbar-center { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+    .search { position: relative; min-width: 140px; max-width: 260px; width: 100%; }
+    .search input, .filter-row select, .filter-row input {
+      width: 100%; outline: none; border: 1px solid var(--line); background: var(--panel); color: var(--text); border-radius: 16px; padding: 10px 12px; font-size: .74rem; box-shadow: var(--shadow-soft); transition: .2s ease;
+    }
+    .search input { padding-left: 30px; min-height: 32px; border-radius: var(--radius-pill); padding-top: 7px; padding-bottom: 7px; }
+    .search input:focus, .filter-row select:focus, .filter-row input:focus { border-color: rgba(205,119,0,.32); box-shadow: 0 0 0 4px rgba(205,119,0,.08); }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none; }
+    .topbar-right { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: nowrap; }
+    .icon-btn { position: relative; font-size: 12px; }
+    .dot { position: absolute; right: 7px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); border: 2px solid var(--panel); }
+    .hero, .dashboard-grid, .summary-list, .property-list, .payment-list, .tenant-list, .activity-list, .stack, .stats-grid { display: grid; gap: 14px; min-width: 0; }
+    .hero { grid-template-columns: 1.3fr .9fr; }
+    .dashboard-grid { grid-template-columns: 1.12fr .88fr; }
+    .card, .hero-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-xl); box-shadow: var(--shadow); position: relative; min-width: 0; }
+    .card { padding: 16px; }
+    .hero-card { overflow: hidden; padding: 18px; min-height: 220px; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .section-head h4 { font-size: .92rem; }
+    .section-head span { color: var(--muted); font-size: .7rem; }
+    .tag, .status, .meta span, .hero-badge, .trend { border-radius: var(--radius-pill); font-size: .64rem; }
+    .tag { padding: 5px 9px; background: rgba(17,24,39,.04); color: var(--muted); }
+    .hero-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; font-weight: 700; color: var(--primary); background: var(--primary-soft); margin-bottom: 10px; }
+    .hero h3 { font-size: 1.34rem; line-height: 1.2; margin-bottom: 8px; max-width: 460px; }
+    .hero p, .muted { color: var(--muted); font-size: .76rem; line-height: 1.6; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .mini-stat, .stat-card, .summary-item, .property-card, .list-row { border-radius: 16px; min-width: 0; padding: 12px; border: 1px solid var(--line); background: var(--panel-soft); box-shadow: var(--shadow-soft); }
+    .mini-stat small, .summary-item small, .stat-card p { display: block; color: var(--muted); font-size: .68rem; }
+    .mini-stat strong { font-size: .98rem; }
+    .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .summary-item b { display: block; font-size: .78rem; margin-bottom: 2px; }
+    .amount { font-size: .78rem; font-weight: 700; }
+    .analytics-card { display: grid; grid-template-rows: auto auto 1fr; min-height: 620px; }
+    .stats-grid { margin-top: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .stat-card { min-height: 100px; display: flex; flex-direction: column; justify-content: space-between; }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stat-icon { width: 36px; height: 36px; border-radius: var(--radius-pill); display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 13px; }
+    .trend { padding: 4px 7px; font-weight: 700; }
+    .up { color: var(--success); background: rgba(22,163,74,.09); }
+    .down { color: var(--danger); background: rgba(220,38,38,.08); }
+    .stat-card h5 { font-size: 1rem; line-height: 1.2; margin: 8px 0 2px; }
+    .chart-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--muted); font-size: .68rem; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: middle; }
+    .chart-wrap { margin-top: 14px; height: 100%; min-height: 420px; position: relative; width: 100%; }
+    .chart-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; margin-bottom: 18px; }
+    .filter-row > * { flex: 1 1 160px; }
+    .property-list { margin-top: 6px; gap: 12px; }
+    .property-card { display: grid; grid-template-columns: 96px 1fr auto; gap: 10px; align-items: center; transition: .2s ease; }
+    .property-card:hover { transform: translateY(-1px); }
+    .property-card-link { cursor: pointer; }
+    .property-card-link * { cursor: pointer; }
+    .property-card-link:focus-visible { outline: 3px solid rgba(205, 119, 0, .22); outline-offset: 2px; }
+    .property-thumb { height: 76px; border-radius: 14px; overflow: hidden; background: #e5e7eb; }
+    .property-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .property-info h5 { font-size: .82rem; margin-bottom: 3px; }
+    .property-info p, .list-main p { color: var(--muted); font-size: .68rem; line-height: 1.5; }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .meta span { padding: 5px 8px; background: rgba(17,24,39,.04); color: var(--muted); }
+    .property-side { min-width: 90px; text-align: right; }
+    .property-side strong { display: block; font-size: .82rem; margin-bottom: 6px; }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; font-weight: 700; }
+    .status::before { content:""; width:6px; height:6px; border-radius:50%; background: currentColor; }
+    .status.occupied { color: var(--success); background: rgba(22,163,74,.09); }
+    .status.pending { color: var(--warning); background: rgba(217,119,6,.09); }
+    .status.vacant { color: var(--info); background: rgba(37,99,235,.09); }
+    .progress-card { overflow: hidden; padding: 0; }
+    .progress-top { padding: 16px 16px 12px; }
+    .progress-body { display: grid; gap: 10px; padding: 0 16px 16px; }
+    .progress-row { display: grid; gap: 6px; }
+    .progress-label { display: flex; justify-content: space-between; gap: 8px; font-size: .74rem; }
+    .progress-bar { height: 8px; border-radius: var(--radius-pill); background: rgba(148,163,184,.18); overflow: hidden; }
+    .progress-bar span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+    .list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .list-main { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .avatar { width: 36px; height: 36px; border-radius: var(--radius-pill); display: grid; place-items: center; background: #1f2937; color: #fff; font-weight: 700; font-size: .68rem; flex-shrink: 0; }
+    .list-main h5 { font-size: .78rem; margin-bottom: 2px; }
+    .list-side { text-align: right; flex-shrink: 0; }
+    .list-side strong { display: block; font-size: .76rem; margin-bottom: 3px; }
+    .list-side small { color: var(--muted); font-size: .66rem; }
+    .table-shell { overflow: auto; border: 1px solid var(--line); border-radius: 18px; }
+    table { width: 100%; border-collapse: collapse; min-width: 680px; }
+    th, td { padding: 12px 14px; text-align: left; font-size: .74rem; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 700; background: var(--panel-soft); }
+    td { background: var(--panel); }
+    .ring-wrap { display:flex; justify-content:center; padding:16px 0 6px; }
+    .ring { width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(var(--primary) 0 calc(var(--ring-angle, 72) * 1%), rgba(17,24,39,.08) 0); position: relative; }
+    .ring::before { content:""; position:absolute; inset:16px; background: var(--panel); border-radius:50%; box-shadow: inset 0 0 0 1px var(--line); }
+    .ring-center { position:absolute; inset:0; display:grid; place-items:center; text-align:center; z-index:2; padding:20px; }
+    .ring-center strong { display:block; font-size:1.7rem; }
+    .ring-center span { color:var(--muted); font-size:.72rem; }
+    .sidebar-tooltip { position: fixed; left: 0; top: 0; transform: translateY(-50%); background: #111827; color: #fff; padding: 8px 11px; border-radius: 12px; font-size: .68rem; font-weight: 600; white-space: nowrap; box-shadow: 0 12px 30px rgba(15, 23, 42, .22); opacity: 0; visibility: hidden; pointer-events: none; z-index: 20000; transition: opacity .15s ease, visibility .15s ease; }
+    .sidebar-tooltip.show { opacity: 1; visibility: visible; }
+    .text-link { color: var(--primary); font-weight: 700; }
+    .app.sidebar-collapsed .brand-text, .app.sidebar-collapsed .nav-title, .app.sidebar-collapsed .nav-label, .app.sidebar-collapsed .sidebar-card { display: none; }
+    .app.sidebar-collapsed .sidebar { padding-inline: 8px; }
+    .app.sidebar-collapsed .sidebar-head { justify-content: center; }
+    .app.sidebar-collapsed .brand { flex: 0; padding: 0; background: transparent; border: 0; }
+    .app.sidebar-collapsed .nav-link { justify-content: center; padding: 6px; overflow: visible; }
+    @media (max-width: 1180px) { .hero, .dashboard-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 1024px) {
+      .sidebar { width: min(76vw, 270px); transform: translate3d(-110%,0,0); box-shadow:none; background: var(--panel); backdrop-filter:none; }
+      .sidebar.show { transform: translate3d(0,0,0); }
+      .main { margin-left:0; width:100%; }
+      .topbar { grid-template-columns: 1fr auto; align-items:start; }
+      .topbar-left { grid-column:1 / -1; justify-content:space-between; }
+      .topbar-center { grid-column:1 / 2; grid-row:2; justify-content:flex-start; }
+      .search { max-width:190px; min-width:0; }
+      .topbar-right { grid-column:2 / 3; grid-row:2; display:grid; grid-template-columns:auto auto auto auto; gap:6px; }
+      .menu-btn { display:grid; }
+    }
+    @media (max-width: 768px) {
+      .topbar-center, .topbar-right { display:none; }
+      body { font-size:12.5px; }
+      .main { padding:12px; }
+      .page-title h2 { font-size:1.14rem; }
+      .page-title p { font-size:.72rem; }
+      .hero-card, .card { padding:14px; }
+      .hero h3 { font-size:1.18rem; }
+      .hero, .dashboard-grid { grid-template-columns:1fr; }
+      .hero-stats, .stats-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .chart-wrap { height:280px; min-height:280px; }
+      .analytics-card { min-height:0; }
+      .property-card { grid-template-columns:1fr; }
+      .property-side, .list-side { text-align:left; }
+      .list-row { flex-direction:column; align-items:flex-start; }
+      .table-shell table { min-width:560px; }
+    }
+    @media (max-width: 560px) {
+      .hero-stats, .stats-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .chart-wrap { height:260px; min-height:260px; margin-top:12px; }
+      .filter-row > * { flex-basis:100%; }
+      .table-shell table { min-width:520px; }
+    }
+  </style>
+</head>
+<%
+  const fullName = (currentUser.fullName || `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Classic User').trim();
+  const firstName = currentUser.firstName || fullName.split(' ')[0] || 'there';
+  const initial = (fullName.charAt(0) || 'C').toUpperCase();
+  const roleLabel = (currentUser.role || 'member').replace(/-/g, ' ');
+  const fmtNum = (value) => Number(value || 0).toLocaleString();
+  const fmtDate = (value) => {
+    if (!value) return '-';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+  };
+  const fmtDateTime = (value) => {
+    if (!value) return '-';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '-' : `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+  };
+  const fmtMoney = (amount, currency = 'USD', unit = '') => `${currency} ${fmtNum(amount)}${unit ? ` / ${unit}` : ''}`;
+  const percent = (value) => Math.max(0, Math.min(100, Number(value || 0)));
+  const listingStatusUI = (status) => status === 'published' ? 'occupied' : status === 'pending' ? 'pending' : 'vacant';
+  const listingStatusLabel = (status) => status === 'published' ? 'Published' : status === 'pending' ? 'Pending' : status === 'draft' ? 'Draft' : status === 'archived' ? 'Archived' : status || 'Unknown';
+  const sampleImage = 'https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=900&q=80';
+  const latestListings = Array.isArray(recentListings) ? recentListings.slice(0, 3) : [];
+  const latestInquiries = Array.isArray(recentInquiries) ? recentInquiries.slice(0, 3) : [];
+  const latestReviews = Array.isArray(recentReviews) ? recentReviews.slice(0, 2) : [];
+  const latestReports = Array.isArray(recentReports) ? recentReports.slice(0, 2) : [];
+  const latestLogs = Array.isArray(recentLogs) ? recentLogs.slice(0, 2) : [];
+  const totalAlerts = Number(stats.newInquiries || 0) + Number(stats.openReports || 0);
+  const listingSeries = (Array.isArray(listingTimeline) ? listingTimeline : []).map((item) => new Date(item.createdAt)).filter((d) => !Number.isNaN(d.getTime()));
+  const inquirySeries = (Array.isArray(inquiryTimeline) ? inquiryTimeline : []).map((item) => new Date(item.createdAt)).filter((d) => !Number.isNaN(d.getTime()));
+  const last7Labels = Array.from({ length: 7 }, (_, idx) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - idx));
+    return d.toLocaleDateString([], { weekday: 'short' });
+  });
+  const tallySeries = (dates) => Array.from({ length: 7 }, (_, idx) => {
+    const day = new Date(); day.setHours(0,0,0,0); day.setDate(day.getDate() - (6 - idx));
+    const next = new Date(day); next.setDate(next.getDate() + 1);
+    return dates.filter((d) => d >= day && d < next).length;
+  });
+  const listingPoints = tallySeries(listingSeries);
+  const inquiryPoints = tallySeries(inquirySeries);
+  const roleHomePath = ['/admin','/super-admin','/agent','/user'].includes(`/${currentUser.role}`) ? `/${currentUser.role}` : '/dashboard';
+%>
+<body>
+  <div class="sidebar-tooltip" id="sidebarTooltip"></div>
+  <div class="app" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="brand">
+          <div class="brand-logo">CR</div>
+          <div class="brand-text">
+            <h1>Classic Rentals</h1>
+            <p><%= roleLabel %> workspace</p>
+          </div>
+        </div>
+        <button class="collapse-btn" id="collapseBtn" aria-label="Toggle sidebar">&lt;</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Main</div>
+        <a class="nav-link active" href="/dashboard" data-label="Dashboard"><span class="nav-icon">⌂</span><span class="nav-label">Dashboard</span></a>
+        <a class="nav-link" href="/dashboard/analytics" data-label="Analytics"><span class="nav-icon">◔</span><span class="nav-label">Analytics</span></a>
+        <a class="nav-link" href="/dashboard/manage-listings" data-label="Listings"><span class="nav-icon">▣</span><span class="nav-label">Listings</span></a>
+        <a class="nav-link" href="/dashboard/inquiries" data-label="Inquiries"><span class="nav-icon">✉</span><span class="nav-label">Inquiries</span></a>
+        <a class="nav-link" href="/dashboard/reviews" data-label="Reviews"><span class="nav-icon">★</span><span class="nav-label">Reviews</span></a>
+        <a class="nav-link" href="/dashboard/profile" data-label="Profile"><span class="nav-icon">☺</span><span class="nav-label">Profile</span></a>
+        <% if (currentUser.role === 'user') { %>
+          <a class="nav-link" href="/dashboard/favorites" data-label="Favorites"><span class="nav-icon">♥</span><span class="nav-label">Favorites</span></a>
+        <% } %>
+        <% if (['agent','admin','super-admin'].includes(currentUser.role)) { %>
+          <a class="nav-link" href="/listings/create" data-label="Create Listing"><span class="nav-icon">＋</span><span class="nav-label">Create Listing</span></a>
+        <% } %>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Workspace</div>
+        <% if (['admin','super-admin'].includes(currentUser.role)) { %>
+          <a class="nav-link" href="/dashboard/users" data-label="Users"><span class="nav-icon">◉</span><span class="nav-label">Users</span></a>
+        <% } %>
+        <a class="nav-link" href="/dashboard/reports" data-label="Reports"><span class="nav-icon">⚑</span><span class="nav-label"><%= ['admin','super-admin'].includes(currentUser.role) ? 'Reports' : 'My Reports' %></span></a>
+        <a class="nav-link" href="/dashboard/billing" data-label="Billing"><span class="nav-icon">🧾</span><span class="nav-label">Billing</span></a>
+        <% if (['admin','super-admin'].includes(currentUser.role)) { %>
+          <a class="nav-link" href="/dashboard/audit-logs" data-label="Audit Logs"><span class="nav-icon">☰</span><span class="nav-label">Audit Logs</span></a>
+          <a class="nav-link" href="/dashboard/settings" data-label="Settings"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></a>
+        <% } %>
+        <a class="nav-link" href="/listings" data-label="Browse Listings"><span class="nav-icon">▤</span><span class="nav-label">Browse Listings</span></a>
+        <a class="nav-link" href="/" data-label="Home"><span class="nav-icon">↗</span><span class="nav-label">Home</span></a>
+        <button class="nav-link" id="sidebarThemeBtn" data-label="Dark Mode" type="button"><span class="nav-icon">◐</span><span class="nav-label">Dark Mode</span></button>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="chip">★ Live Workspace</div>
+        <h3><%= totalAlerts %> items need attention</h3>
+        <p>New inquiries, open reports, listings, and profile actions are now flowing through this new dashboard layout.</p>
+        <a href="/dashboard/inquiries"><button type="button">Open work queue</button></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div class="topbar-left">
+          <div class="page-title">
+            <h2 id="pageHeading"><%= firstName %>'s Dashboard</h2>
+            <p id="pageSubheading">The new uploaded UI is now using live project data and real page routes.</p>
+          </div>
+          <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+        </div>
+
+        <div class="topbar-center">
+          <div class="search">
+            <span class="search-icon">⌕</span>
+            <input type="text" id="searchInput" placeholder="Search recent listings..." />
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <a class="icon-btn" title="Alerts" href="/dashboard/inquiries">🔔<% if (totalAlerts > 0) { %><span class="dot"></span><% } %></a>
+          <button class="theme-btn" id="themeBtn" title="Toggle dark mode" type="button">◐</button>
+          <a class="ghost-btn" href="/dashboard/analytics">Analytics</a>
+          <% if (['agent','admin','super-admin'].includes(currentUser.role)) { %>
+            <a class="primary-btn" href="/listings/create">+ Add Listing</a>
+          <% } else { %>
+            <a class="primary-btn" href="/listings">Browse Listings</a>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="hero">
+        <div class="hero-card">
+          <div class="hero-content">
+            <div class="hero-badge">● Live Portfolio Overview</div>
+            <h3>Manage listings, conversations, reviews, reports, and account activity inside the exact new UI.</h3>
+            <p>Every main area below now reads from your database instead of static mock values, while the buttons use the real project routes.</p>
+            <div class="hero-actions">
+              <a class="primary-btn" href="/dashboard/manage-listings">Manage Listings</a>
+              <a class="ghost-btn" href="/dashboard/profile">Open Profile</a>
+            </div>
+            <div class="hero-stats">
+              <div class="mini-stat"><small>Total Listings</small><strong><%= fmtNum(stats.totalListings) %></strong></div>
+              <div class="mini-stat"><small>Open Inquiries</small><strong><%= fmtNum(stats.totalInquiries) %></strong></div>
+              <div class="mini-stat"><small>Published Reviews</small><strong><%= fmtNum(stats.publishedReviews) %></strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-card side-summary">
+          <div class="section-head">
+            <div>
+              <h4>Publishing Rate</h4><span>Current listing status mix</span>
+            </div><span class="tag">Updated live</span>
+          </div>
+          <div class="ring-wrap">
+            <div class="ring" style="--ring-angle:<%= percent(stats.occupancy) %>">
+              <div class="ring-center"><div><strong><%= percent(stats.occupancy) %>%</strong><span>Published Listings</span></div></div>
+            </div>
+          </div>
+          <div class="summary-list">
+            <div class="summary-item"><div><b>Verified listings</b><small>Quality-approved records</small></div><div class="amount"><%= fmtNum(stats.verifiedCount) %></div></div>
+            <div class="summary-item"><div><b>Featured listings</b><small>Boosted visibility</small></div><div class="amount"><%= fmtNum(stats.featuredCount) %></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="stack">
+          <div class="card analytics-card">
+            <div class="section-head">
+              <div>
+                <h4>Overview Analytics</h4><span>Last 7 days of listings and inquiries</span>
+              </div>
+              <div class="chart-legend">
+                <span><i class="legend-dot" style="background:#cd7700"></i>Listings</span>
+                <span><i class="legend-dot" style="background:#d1d5db"></i>Inquiries</span>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-top"><div class="stat-icon">▣</div><span class="trend up"><%= fmtNum(stats.publishedListings) %></span></div>
+                <div><h5><%= fmtNum(stats.totalListings) %></h5><p>Total Listings</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top"><div class="stat-icon">✉</div><span class="trend <%= stats.newInquiries > 0 ? 'up' : 'down' %>"><%= fmtNum(stats.newInquiries) %></span></div>
+                <div><h5><%= fmtNum(stats.totalInquiries) %></h5><p>Total Inquiries</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top"><div class="stat-icon">★</div><span class="trend up"><%= stats.avgRating %>/5</span></div>
+                <div><h5><%= fmtNum(stats.totalReviews) %></h5><p>Total Reviews</p></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top"><div class="stat-icon">⚑</div><span class="trend <%= stats.openReports > 0 ? 'down' : 'up' %>"><%= fmtNum(stats.openReports) %></span></div>
+                <div><h5><%= fmtNum(stats.totalReports) %></h5><p>Total Reports</p></div>
+              </div>
+            </div>
+            <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div>
+                <h4>Recent Listings</h4><span>Live cards from your latest records</span>
+              </div><a class="ghost-btn" href="/dashboard/manage-listings">View All</a>
+            </div>
+            <div class="filter-row">
+              <select id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="published">Published</option>
+                <option value="pending">Pending</option>
+                <option value="draft">Draft</option>
+                <option value="archived">Archived</option>
+              </select>
+              <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                <% (categoryBreakdown || []).forEach((item) => { %>
+                  <option value="<%= item._id || 'uncategorized' %>"><%= item._id || 'uncategorized' %></option>
+                <% }) %>
+              </select>
+              <input type="text" id="propertySearch" placeholder="Search by title or location" />
+            </div>
+            <div class="property-list" id="propertyList">
+              <% if (latestListings.length) { %>
+                <% latestListings.forEach((item) => { const thumb = item.images?.find((img) => img.isPrimary)?.url || item.images?.[0]?.url || sampleImage; %>
+                  <article class="property-card property-card-link" data-status="<%= item.status %>" data-category="<%= item.category %>" data-name="<%= `${item.title} ${item.location?.area || ''} ${item.location?.city || ''}`.toLowerCase() %>" tabindex="0" role="link" aria-label="Open <%= item.title %> details" onclick="window.location.href='/dashboard/manage-listings/<%= item._id %>'" onkeypress="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='/dashboard/manage-listings/<%= item._id %>'}">
+                    <div class="property-thumb"><img src="<%= thumb %>" alt="<%= item.title %>"></div>
+                    <div class="property-info">
+                      <h5><%= item.title %></h5>
+                      <p><%= [item.location?.area, item.location?.city].filter(Boolean).join(', ') || 'No location yet' %> • <%= item.category %> • <%= item.purpose %></p>
+                      <div class="meta"><span><%= item.specs?.bedrooms || 0 %> beds</span><span><%= item.specs?.bathrooms || 0 %> baths</span><span><%= item.views || 0 %> views</span></div>
+                    </div>
+                    <div class="property-side">
+                      <strong><%= fmtMoney(item.price?.amount, item.price?.currency, item.price?.unit) %></strong>
+                      <span class="status <%= listingStatusUI(item.status) %>"><%= listingStatusLabel(item.status) %></span>
+                    </div>
+                  </article>
+                <% }) %>
+              <% } else { %>
+                <div class="summary-item"><div><b>No listings yet</b><small>Create your first listing to populate this section.</small></div><a class="text-link" href="/listings/create">Create</a></div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="card progress-card">
+            <div class="progress-top">
+              <div class="section-head">
+                <div>
+                  <h4>Workspace Targets</h4><span>Calculated from live totals</span>
+                </div><span class="tag">Realtime</span>
+              </div>
+            </div>
+            <div class="progress-body">
+              <div class="progress-row">
+                <div class="progress-label"><span>Publishing rate</span><strong><%= percent(stats.occupancy) %>%</strong></div>
+                <div class="progress-bar"><span style="width:<%= percent(stats.occupancy) %>%"></span></div>
+              </div>
+              <div class="progress-row">
+                <div class="progress-label"><span>Verification rate</span><strong><%= percent(stats.verificationRate) %>%</strong></div>
+                <div class="progress-bar"><span style="width:<%= percent(stats.verificationRate) %>%"></span></div>
+              </div>
+              <div class="progress-row">
+                <div class="progress-label"><span>New inquiry pressure</span><strong><%= percent(stats.responsePressure) %>%</strong></div>
+                <div class="progress-bar"><span style="width:<%= percent(stats.responsePressure) %>%"></span></div>
+              </div>
+              <div class="progress-row">
+                <div class="progress-label"><span>Open report risk</span><strong><%= percent(stats.reportRisk) %>%</strong></div>
+                <div class="progress-bar"><span style="width:<%= percent(stats.reportRisk) %>%"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div>
+                <h4>Recent Inquiries</h4><span>Latest messages and leads</span>
+              </div><a class="ghost-btn" href="/dashboard/inquiries">See More</a>
+            </div>
+            <div class="payment-list">
+              <% if (latestInquiries.length) { %>
+                <% latestInquiries.forEach((item) => { %>
+                  <div class="list-row">
+                    <div class="list-main">
+                      <div class="avatar"><%= ((item.name || item.sender?.firstName || 'G').charAt(0) || 'G').toUpperCase() %></div>
+                      <div>
+                        <h5><%= item.name || `${item.sender?.firstName || ''} ${item.sender?.lastName || ''}`.trim() || 'Guest' %></h5>
+                        <p><%= item.listing?.title || 'General inquiry' %></p>
+                      </div>
+                    </div>
+                    <div class="list-side"><strong><%= item.status %></strong><small><%= fmtDateTime(item.createdAt) %></small></div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="summary-item"><div><b>No inquiries yet</b><small>Incoming messages will appear here automatically.</small></div></div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div>
+                <h4>Reviews & Reports</h4><span>Quality and moderation</span>
+              </div><a class="ghost-btn" href="/dashboard/reviews">Open Reviews</a>
+            </div>
+            <div class="tenant-list">
+              <% if (latestReviews.length) { %>
+                <% latestReviews.forEach((item) => { %>
+                  <div class="list-row">
+                    <div class="list-main">
+                      <div class="avatar"><%= item.rating %>★</div>
+                      <div>
+                        <h5><%= item.listing?.title || 'Listing' %></h5>
+                        <p><%= item.comment || 'No written comment' %></p>
+                      </div>
+                    </div>
+                    <div class="list-side"><strong><%= item.status %></strong><small><%= fmtDate(item.createdAt) %></small></div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="summary-item"><div><b>No reviews yet</b><small>Published and pending feedback will show here.</small></div></div>
+              <% } %>
+              <% if (latestReports.length) { %>
+                <% latestReports.forEach((item) => { %>
+                  <div class="list-row">
+                    <div class="list-main">
+                      <div class="avatar">⚑</div>
+                      <div>
+                        <h5><%= item.listing?.title || 'Listing' %></h5>
+                        <p><%= item.reason %></p>
+                      </div>
+                    </div>
+                    <div class="list-side"><strong><%= item.status %></strong><small><%= fmtDate(item.createdAt) %></small></div>
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-head">
+              <div>
+                <h4>Recent Activity</h4><span>From real modules</span>
+              </div><span class="tag">Live</span>
+            </div>
+            <div class="activity-list">
+              <% if (['admin','super-admin'].includes(currentUser.role) && latestLogs.length) { %>
+                <% latestLogs.forEach((item) => { %>
+                  <div class="list-row">
+                    <div class="list-main">
+                      <div class="avatar">☰</div>
+                      <div>
+                        <h5><%= item.action %></h5>
+                        <p><%= item.actor ? `${item.actor.firstName || ''} ${item.actor.lastName || ''}`.trim() : 'System' %></p>
+                      </div>
+                    </div>
+                    <div class="list-side"><small><%= fmtDateTime(item.createdAt) %></small></div>
+                  </div>
+                <% }) %>
+              <% } else { %>
+                <div class="list-row">
+                  <div class="list-main"><div class="avatar">👤</div><div><h5><%= fullName %></h5><p>Signed in as <%= roleLabel %></p></div></div>
+                  <div class="list-side"><small>Now</small></div>
+                </div>
+                <div class="list-row">
+                  <div class="list-main"><div class="avatar">↗</div><div><h5>Public site shortcut</h5><p>Browse the live catalog or return to the public homepage.</p></div></div>
+                  <div class="list-side"><a class="text-link" href="/">Open</a></div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h4>Live Table Snapshot</h4><span>Recent records from the current dashboard scope</span>
+          </div>
+          <a class="ghost-btn" href="/dashboard/manage-listings">Open module</a>
+        </div>
+        <div class="table-shell">
+          <table>
+            <thead>
+              <tr>
+                <th>Listing</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (recentListings.length) { %>
+                <% recentListings.forEach((item) => { %>
+                  <tr>
+                    <td><strong><%= item.title %></strong><br><span class="muted"><%= fmtMoney(item.price?.amount, item.price?.currency, item.price?.unit) %></span></td>
+                    <td><%= item.category %></td>
+                    <td><%= [item.location?.area, item.location?.city].filter(Boolean).join(', ') || '-' %></td>
+                    <td><%= listingStatusLabel(item.status) %></td>
+                    <td><a class="text-link" href="/listings/<%= item.slug %>">View</a></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr><td colspan="5">No listings found in this workspace yet.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const appShell = document.getElementById('appShell');
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    const collapseBtn = document.getElementById('collapseBtn');
+    const themeBtn = document.getElementById('themeBtn');
+    const sidebarThemeBtn = document.getElementById('sidebarThemeBtn');
+    const sidebarTooltip = document.getElementById('sidebarTooltip');
+    const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+    const statusFilter = document.getElementById('statusFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const propertySearch = document.getElementById('propertySearch');
+    const searchInput = document.getElementById('searchInput');
+    const propertyCards = Array.from(document.querySelectorAll('.property-card'));
+
+    function isMobile() { return window.innerWidth <= 1024; }
+    function syncLayoutGuards() {
+      document.documentElement.style.overflowX = 'hidden';
+      document.body.style.overflowX = 'hidden';
+      sidebar.style.overflowX = isMobile() ? 'hidden' : 'visible';
+    }
+    function hideSidebarTooltip() { sidebarTooltip.classList.remove('show'); }
+    function showSidebarTooltip(target) {
+      if (!appShell.classList.contains('sidebar-collapsed') || isMobile()) return hideSidebarTooltip();
+      const rect = target.getBoundingClientRect();
+      sidebarTooltip.textContent = target.dataset.label || '';
+      sidebarTooltip.style.left = `${rect.right + 14}px`;
+      sidebarTooltip.style.top = `${rect.top + rect.height / 2}px`;
+      sidebarTooltip.classList.add('show');
+    }
+    function updateIcons() {
+      if (isMobile()) {
+        menuBtn.textContent = sidebar.classList.contains('show') ? '✕' : '☰';
+        collapseBtn.textContent = sidebar.classList.contains('show') ? '✕' : '>';
+      } else {
+        menuBtn.textContent = '☰';
+        collapseBtn.textContent = appShell.classList.contains('sidebar-collapsed') ? '>' : '<';
+      }
+    }
+    function openSidebar() { sidebar.classList.add('show'); syncLayoutGuards(); updateIcons(); }
+    function closeSidebar() { sidebar.classList.remove('show'); syncLayoutGuards(); updateIcons(); }
+    menuBtn?.addEventListener('click', () => { if (!isMobile()) return; sidebar.classList.contains('show') ? closeSidebar() : openSidebar(); });
+    collapseBtn?.addEventListener('click', () => {
+      if (isMobile()) return sidebar.classList.contains('show') ? closeSidebar() : openSidebar();
+      appShell.classList.toggle('sidebar-collapsed'); hideSidebarTooltip(); updateIcons();
+    });
+    navLinks.forEach((link) => {
+      link.addEventListener('mouseenter', () => showSidebarTooltip(link));
+      link.addEventListener('mouseleave', hideSidebarTooltip);
+      link.addEventListener('focus', () => showSidebarTooltip(link));
+      link.addEventListener('blur', hideSidebarTooltip);
+    });
+    function filterProperties() {
+      const status = statusFilter?.value || 'all';
+      const category = categoryFilter?.value || 'all';
+      const search = (propertySearch?.value || searchInput?.value || '').trim().toLowerCase();
+      propertyCards.forEach((card) => {
+        const matchStatus = status === 'all' || card.dataset.status === status;
+        const matchCategory = category === 'all' || card.dataset.category === category;
+        const matchSearch = !search || card.dataset.name.includes(search);
+        card.style.display = matchStatus && matchCategory && matchSearch ? 'grid' : 'none';
+      });
+    }
+    statusFilter?.addEventListener('change', filterProperties);
+    categoryFilter?.addEventListener('change', filterProperties);
+    propertySearch?.addEventListener('input', filterProperties);
+    searchInput?.addEventListener('input', filterProperties);
+
+    const labels = <%- JSON.stringify(last7Labels) %>;
+    const pointsRevenue = <%- JSON.stringify(listingPoints) %>;
+    const pointsOutstanding = <%- JSON.stringify(inquiryPoints) %>;
+    const canvas = document.getElementById('revenueChart');
+    const ctx = canvas?.getContext('2d');
+
+    function roundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+    function drawLine(data, color, fill = false) {
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width; const height = rect.height;
+      const padX = 14; const padTop = 14; const padBottom = 48;
+      const max = Math.max(6, ...pointsRevenue, ...pointsOutstanding, 1);
+      const safeData = Array.isArray(data) && data.length ? data : [0];
+      const stepX = (width - padX * 2) / Math.max(1, safeData.length - 1);
+      const pts = safeData.map((v, i) => ({ x: padX + stepX * i, y: padTop + ((max - v) / max) * (height - padTop - padBottom) }));
+      if (!pts.length) return;
+      if (fill && pts.length > 1) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, 'rgba(205,119,0,0.16)');
+        gradient.addColorStop(1, 'rgba(205,119,0,0.01)');
+        ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) { const prev = pts[i - 1], curr = pts[i], cx = (prev.x + curr.x) / 2; ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + curr.y) / 2); }
+        const last = pts[pts.length - 1];
+        ctx.lineTo(last.x, height - padBottom + 2); ctx.lineTo(pts[0].x, height - padBottom + 2); ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
+      }
+      ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) { const prev = pts[i - 1], curr = pts[i], cx = (prev.x + curr.x) / 2; ctx.quadraticCurveTo(prev.x, prev.y, cx, (prev.y + curr.y) / 2); }
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+      const labelColor = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#6b7280';
+      pts.forEach((p, i) => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+        ctx.fillStyle = labelColor; ctx.font = '12px Poppins'; ctx.textAlign = 'center'; ctx.fillText(labels[i] || '', p.x, height - 23);
+      });
+    }
+    function drawChart() {
+      if (!canvas || !ctx) return;
+      const rect = canvas.getBoundingClientRect(); const width = rect.width; const height = rect.height;
+      ctx.clearRect(0, 0, width, height);
+      roundedRect(0, 0, width, height, 18); ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--panel').trim() || '#fff'; ctx.fill();
+      const rows = 4; const padX = 14; const padTop = 14; const padBottom = 48; const chartH = height - padTop - padBottom;
+      const gridColor = document.body.classList.contains('dark-mode') ? 'rgba(148,163,184,0.14)' : '#edf2f7';
+      const outstandingColor = document.body.classList.contains('dark-mode') ? '#64748b' : '#d1d5db';
+      for (let i = 0; i <= rows; i++) { const y = padTop + (chartH / rows) * i; ctx.beginPath(); ctx.moveTo(padX, y); ctx.lineTo(width - padX, y); ctx.strokeStyle = gridColor; ctx.lineWidth = 1; ctx.stroke(); }
+      const hasRevenue = Array.isArray(pointsRevenue) && pointsRevenue.some(v => Number(v) > 0);
+      const hasOutstanding = Array.isArray(pointsOutstanding) && pointsOutstanding.some(v => Number(v) > 0);
+      if (!hasRevenue && !hasOutstanding) {
+        ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#6b7280';
+        ctx.font = '600 13px Poppins';
+        ctx.textAlign = 'center';
+        ctx.fillText('No chart data yet', width / 2, height / 2);
+        return;
+      }
+      if (hasOutstanding) drawLine(pointsOutstanding, outstandingColor);
+      if (hasRevenue) drawLine(pointsRevenue, '#cd7700', true);
+    }
+    function resizeCanvas() {
+      if (!canvas || !ctx) return;
+      const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect(); if (!rect.width || !rect.height) return;
+      canvas.width = Math.max(1, rect.width * dpr); canvas.height = Math.max(1, rect.height * dpr); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr); drawChart();
+    }
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); syncLayoutGuards(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 100); }); }
+    themeBtn?.addEventListener('click', toggleTheme);
+    sidebarThemeBtn?.addEventListener('click', (e) => { e.preventDefault(); toggleTheme(); });
+    window.addEventListener('resize', () => { syncLayoutGuards(); if (!isMobile()) closeSidebar(); hideSidebarTooltip(); updateIcons(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 80); }); });
+    syncLayoutGuards(); updateIcons(); filterProperties(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 100); });
+  </script>
+</body>
+</html>

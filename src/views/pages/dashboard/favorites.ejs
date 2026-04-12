@@ -1,0 +1,28 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Favorites</h2><p>Saved items now also use the new dashboard UI.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/listings">Browse listings</a></div>
+    </section>
+    
+<section class="cards-grid">
+<% favorites.forEach(item => { const listing = item.listing; if (!listing) return; %>
+  <article class="card">
+    <div class="section-head"><div><h4><%= listing.title %></h4><span><%= listing.category %></span></div><span class="status <%= listing.status === 'published' ? 'published' : listing.status === 'pending' ? 'pending' : 'vacant' %>"><%= listing.status %></span></div>
+    <p class="muted"><%= [listing.location?.area, listing.location?.city].filter(Boolean).join(', ') %></p>
+    <p><strong><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %></strong></p>
+    <div class="actionRow"><a class="tiny-btn" href="/listings/<%= listing.slug %>">View listing</a></div>
+  </article>
+<% }) %>
+<% if (!favorites.length) { %><div class="card"><div class="emptyState">No saved favorites yet.</div></div><% } %>
+</section>
+
+  </main>
+</div>
+</body></html>

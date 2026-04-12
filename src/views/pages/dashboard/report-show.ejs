@@ -1,0 +1,27 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Report Details</h2><p>Handle one report without leaving the new interface.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/reports">Back</a></div>
+    </section>
+    
+<section class="dashboard-grid">
+  <div class="stack">
+    <div class="card"><div class="section-head"><div><h4>Report Details</h4><span>Moderation item</span></div><span class="status <%= report.status === 'resolved' ? 'published' : report.status === 'reviewing' ? 'pending' : 'vacant' %>"><%= report.status %></span></div><p><strong>Reason:</strong> <%= report.reason %></p><p><%= report.details || 'No details provided.' %></p></div>
+    <div class="card"><div class="section-head"><div><h4>Listing</h4><span>Open source record</span></div></div><p><strong><%= report.listing?.title || '-' %></strong></p><div class="actionRow"><a class="tiny-btn" href="/listings/<%= report.listing?.slug %>">View listing</a><a class="tiny-btn" href="/dashboard/reports">Back to reports</a></div></div>
+  </div>
+  <div class="stack">
+    <div class="card"><div class="section-head"><div><h4>People</h4><span>Who is involved</span></div></div><div class="list-stack"><div class="list-row"><div class="list-main"><div class="avatar">R</div><div><h5>Reporter</h5><p><%= report.reporter ? `${report.reporter.firstName} ${report.reporter.lastName}` : '-' %></p></div></div></div><div class="list-row"><div class="list-main"><div class="avatar">M</div><div><h5>Resolved By</h5><p><%= report.resolvedBy ? `${report.resolvedBy.firstName} ${report.resolvedBy.lastName}` : 'Pending' %></p></div></div></div></div></div>
+    <% if (adminView && report.status !== 'resolved') { %><div class="card"><form class="filter-row" method="post" action="/dashboard/reports/<%= report._id %>/resolve"><% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %><button class="primary-btn" type="submit">Mark as resolved</button></form></div><% } %>
+  </div>
+</section>
+
+  </main>
+</div>
+</body></html>

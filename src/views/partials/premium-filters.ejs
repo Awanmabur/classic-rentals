@@ -1,0 +1,98 @@
+<%
+  const pf = typeof filters !== 'undefined' ? filters : {};
+  const pfAction = typeof action !== 'undefined' ? action : '/listings';
+  const pfHeading = typeof heading !== 'undefined' ? heading : 'Refine your search';
+  const pfSubheading = typeof subheading !== 'undefined' ? subheading : 'Use the same premium search controls from the home page.';
+  const pfStatus = typeof showStatus !== 'undefined' ? showStatus : false;
+  const pfAreaOptions = Array.isArray(areaOptions) ? areaOptions : ['Juba Town','Hai Malakal','Munuki','Thongpiny','Gumbo','Gudele','Sherikat'];
+  const pfSort = typeof showSort !== 'undefined' ? showSort : true;
+%>
+<section class="filtersWrap premiumFiltersBlock">
+  <div class="filtersBar staticFiltersBar">
+    <div class="filtersShell">
+      <form class="filtersCard" method="get" action="<%= pfAction %>">
+        <div class="filtersTop">
+          <div class="filtersTitle">
+            <div class="miniIco">⌁</div>
+            <div class="filtersTitleWrap">
+              <b><%= pfHeading %></b>
+              <div class="muted"><%= pfSubheading %></div>
+            </div>
+          </div>
+          <div class="filtersRight">
+            <a class="tinyBtn" href="<%= pfAction %>">Reset</a>
+            <button class="btn" type="submit">Apply filters</button>
+          </div>
+        </div>
+
+        <div class="filterGrid premiumFilterGrid">
+          <div class="field searchField">
+            <div class="fIco">⌕</div>
+            <label for="pf-q">Search</label>
+            <input id="pf-q" type="text" name="q" placeholder="Search by title, keyword or area" value="<%= pf.q || '' %>">
+          </div>
+
+          <div class="field">
+            <div class="fIco">⌂</div>
+            <label for="pf-category">Category</label>
+            <select id="pf-category" name="category">
+              <option value="">All categories</option>
+              <% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(c => { %>
+                <option value="<%= c %>" <%= pf.category === c ? 'selected' : '' %>><%= c %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="field">
+            <div class="fIco">◎</div>
+            <label for="pf-area">Area</label>
+            <select id="pf-area" name="area">
+              <option value="">All areas</option>
+              <% pfAreaOptions.forEach(a => { %>
+                <option value="<%= a %>" <%= pf.area === a ? 'selected' : '' %>><%= a %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <% if (pfStatus) { %>
+            <div class="field">
+              <div class="fIco">◔</div>
+              <label for="pf-status">Status</label>
+              <select id="pf-status" name="status">
+                <option value="">All statuses</option>
+                <% ['pending','published','rejected','archived','draft'].forEach(s => { %>
+                  <option value="<%= s %>" <%= pf.status === s ? 'selected' : '' %>><%= s %></option>
+                <% }) %>
+              </select>
+            </div>
+          <% } %>
+
+          <div class="field">
+            <div class="fIco">$</div>
+            <label for="pf-min">Min price</label>
+            <input id="pf-min" type="number" min="0" name="minPrice" placeholder="Min price" value="<%= pf.minPrice || '' %>">
+          </div>
+
+          <div class="field">
+            <div class="fIco">$</div>
+            <label for="pf-max">Max price</label>
+            <input id="pf-max" type="number" min="0" name="maxPrice" placeholder="Max price" value="<%= pf.maxPrice || '' %>">
+          </div>
+
+          <% if (pfSort) { %>
+            <div class="field">
+              <div class="fIco">↕</div>
+              <label for="pf-sort">Sort</label>
+              <select id="pf-sort" name="sort">
+                <option value="">Newest first</option>
+                <option value="featured" <%= pf.sort === 'featured' ? 'selected' : '' %>>Featured</option>
+                <option value="price_asc" <%= pf.sort === 'price_asc' ? 'selected' : '' %>>Price: low to high</option>
+                <option value="price_desc" <%= pf.sort === 'price_desc' ? 'selected' : '' %>>Price: high to low</option>
+              </select>
+            </div>
+          <% } %>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

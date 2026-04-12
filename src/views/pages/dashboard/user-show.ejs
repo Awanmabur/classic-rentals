@@ -1,0 +1,24 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>User Details</h2><p>Edit a user record in the same new dashboard interface.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/users">Back</a></div>
+    </section>
+    
+<section class="profile-grid">
+  <div class="card profile-card"><div class="profile-pic"><%= (user.firstName || 'U').charAt(0).toUpperCase() %></div><h4><%= user.firstName %> <%= user.lastName %></h4><p class="muted"><%= user.email %><br><%= user.phone || '-' %></p></div>
+  <div class="stack">
+    <section class="metric-strip"><div class="metric-box"><h5><%= stats.listingCount %></h5><p>Listings</p></div><div class="metric-box"><h5><%= stats.inquiryCount %></h5><p>Inquiries</p></div><div class="metric-box"><h5><%= stats.favoriteCount %></h5><p>Favorites</p></div><div class="metric-box"><h5><%= stats.reviewCount %></h5><p>Reviews</p></div></section>
+    <div class="card"><form class="form-grid" method="post" action="/dashboard/users/<%= user._id %>/update"><% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %><input name="firstName" value="<%= user.firstName %>"><input name="lastName" value="<%= user.lastName %>"><input name="email" value="<%= user.email %>"><input name="phone" value="<%= user.phone || '' %>"><select name="role"><% ['super-admin','admin','agent','user'].forEach(s=>{ %><option value="<%= s %>" <%= user.role===s ? 'selected' : '' %>><%= s %></option><% }) %></select><select name="status"><% ['active','pending','suspended'].forEach(s=>{ %><option value="<%= s %>" <%= user.status===s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="primary-btn" type="submit">Save changes</button></form></div>
+  </div>
+</section>
+
+  </main>
+</div>
+</body></html>

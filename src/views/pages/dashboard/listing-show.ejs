@@ -1,0 +1,102 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Listing Details</h2><p>Open one listing in a focused workspace for actions, moderation, and full information.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/manage-listings">Back</a></div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="stack">
+        <div class="card">
+          <div class="section-head"><div><h4><%= listing.title %></h4><span><%= listing.category %> • <%= listing.location?.area || '-' %>, <%= listing.location?.city || '-' %></span></div><span class="status <%= listing.status === 'published' ? 'published' : listing.status === 'pending' ? 'pending' : 'vacant' %>"><%= listing.status %></span></div>
+          <div class="metric-strip compact-metrics" style="margin-top:14px;">
+            <div class="metric-box"><h5><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %></h5><p>Price</p></div>
+            <div class="metric-box"><h5><%= listing.views || 0 %></h5><p>Views</p></div>
+            <div class="metric-box"><h5><%= listing.verified ? 'Yes' : 'No' %></h5><p>Verified</p></div>
+            <div class="metric-box"><h5><%= listing.featured ? 'Yes' : 'No' %></h5><p>Featured</p></div>
+          </div>
+          <div class="page-banner" style="margin-top:14px;"><h3>Description</h3><p><%= listing.description || 'No description provided.' %></p></div>
+          <div class="three-col" style="margin-top:14px;">
+            <div class="summary-item"><div><b>Slug</b><small><%= listing.slug || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Created</b><small><%= listing.createdAt ? new Date(listing.createdAt).toDateString() : '-' %></small></div></div>
+            <div class="summary-item"><div><b>Updated</b><small><%= listing.updatedAt ? new Date(listing.updatedAt).toDateString() : '-' %></small></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-head"><div><h4>Specs & amenities</h4><span>More info for this listing</span></div></div>
+          <div class="three-col">
+            <div class="summary-item"><div><b>Bedrooms</b><small><%= listing.specs?.bedrooms ?? '-' %></small></div></div>
+            <div class="summary-item"><div><b>Bathrooms</b><small><%= listing.specs?.bathrooms ?? '-' %></small></div></div>
+            <div class="summary-item"><div><b>Size</b><small><%= listing.specs?.sizeSqm ?? '-' %> sqm</small></div></div>
+            <div class="summary-item"><div><b>Transmission</b><small><%= listing.specs?.transmission || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Fuel</b><small><%= listing.specs?.fuelType || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Year</b><small><%= listing.specs?.year || '-' %></small></div></div>
+          </div>
+          <div class="pillRow" style="margin-top:14px;">
+            <% if ((listing.amenities || []).length) { %>
+              <% listing.amenities.forEach(item => { %><span class="tag"><%= item %></span><% }) %>
+            <% } else { %>
+              <span class="tag">No amenities listed</span>
+            <% } %>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-head"><div><h4>Location & publishing</h4><span>Useful detail for review and action</span></div></div>
+          <div class="three-col">
+            <div class="summary-item"><div><b>Area</b><small><%= listing.location?.area || '-' %></small></div></div>
+            <div class="summary-item"><div><b>City</b><small><%= listing.location?.city || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Country</b><small><%= listing.location?.country || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Address</b><small><%= listing.location?.address || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Purpose</b><small><%= listing.purpose || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Visibility</b><small><%= listing.visibility || '-' %></small></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="section-head"><div><h4>Listing owner</h4><span>Responsible account</span></div></div>
+          <div class="table-title-cell">
+            <strong><%= listing.owner ? `${listing.owner.firstName} ${listing.owner.lastName}` : '-' %></strong>
+            <span><%= listing.owner?.email || '-' %></span>
+            <span>Agent: <%= listing.assignedAgent ? `${listing.assignedAgent.firstName} ${listing.assignedAgent.lastName}` : 'Unassigned' %></span>
+          </div>
+        </div>
+        <% if ((agents || []).length) { %>
+        <div class="card">
+          <div class="section-head"><div><h4>Assign agent</h4><span>Route this listing to an active agent</span></div></div>
+          <form class="professionalFormGrid" method="post" action="/dashboard/manage-listings/<%= listing._id %>/assign-agent">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <div class="field wide"><label>Agent</label><select class="input" name="agentId"><option value="">Unassign agent</option><% agents.forEach(agent => { %><option value="<%= agent._id %>" <%= String(listing.assignedAgent?._id || '') === String(agent._id) ? 'selected' : '' %>><%= agent.firstName %> <%= agent.lastName %></option><% }) %></select></div>
+            <div class="formActionRow"><button class="primary-btn" type="submit">Save agent</button></div>
+          </form>
+        </div>
+        <% } %>
+        <% if (['admin','super-admin'].includes(currentUser.role)) { %>
+        <div class="card">
+          <div class="section-head"><div><h4>Moderation</h4><span>Update visibility and trust markers</span></div></div>
+          <form class="professionalFormGrid" method="post" action="/dashboard/manage-listings/<%= listing._id %>/moderate">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <div class="field"><label>Status</label><select class="input" name="status"><% ['pending','published','rejected','archived'].forEach(s=>{ %><option value="<%= s %>" <%= listing.status===s ? 'selected' : '' %>><%= s %></option><% }) %></select></div>
+            <div class="field wide">
+              <label>Flags</label>
+              <div class="table-actions-row">
+                <label class="checkLine"><input type="checkbox" name="verified" value="true" <%= listing.verified ? 'checked' : '' %>> Verified</label>
+                <label class="checkLine"><input type="checkbox" name="featured" value="true" <%= listing.featured ? 'checked' : '' %>> Featured</label>
+              </div>
+            </div>
+            <div class="formActionRow"><a class="ghost-btn" href="/listings/<%= listing.slug %>" target="_blank" rel="noreferrer">Public view</a><button class="primary-btn" type="submit">Update listing</button></div>
+          </form>
+        </div>
+        <% } %>
+      </div>
+    </section>
+  </main>
+</div>
+</body></html>

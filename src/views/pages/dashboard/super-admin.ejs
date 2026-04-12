@@ -1,0 +1,133 @@
+<%- include('../../partials/head', { title }) %>
+<div class="dashboardShell dashboardFuture dashboardUnified" id="dashboardApp">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <button class="dashboardDrawerMask" id="dashboardDrawerMask" type="button" aria-label="Close menu"></button>
+  <main class="dashboardMain">
+    <section class="dashboardPanel">
+      <div class="dashboardTopbar">
+        <div class="dashboardTitle">
+          <h1>Dashboard</h1>
+          <p>Platform-wide command center for users, listings, open reports, and audit visibility.</p>
+        </div>
+        <div class="topbarActions">
+          <button class="dashMenuBtn mobileOnlyDash" id="dashboardMenuToggle" type="button">☰ Menu</button>
+          <a class="dashGhostBtn" href="/dashboard/profile">Profile</a>
+          <a class="dashPrimaryBtn" href="/listings/create">Create Listing</a>
+        </div>
+      </div>
+      <section class="dashboardMetrics">
+        <article class="metricCard">
+          <small>Users</small>
+          <div class="metricValue"><span><%= stats.users %></span></div>
+          <div class="miniBars"><span style="height:32%"></span><span style="height:70%"></span><span style="height:54%"></span><span style="height:84%"></span></div>
+          <div class="metricDelta">Growing platform members</div>
+        </article>
+
+        <article class="metricCard">
+          <small>Listings</small>
+          <div class="metricValue"><span><%= stats.listings %></span></div>
+          <div class="miniBars"><span style="height:32%"></span><span style="height:70%"></span><span style="height:54%"></span><span style="height:84%"></span></div>
+          <div class="metricDelta">Inventory across all roles</div>
+        </article>
+
+        <article class="metricCard">
+          <small>Pending</small>
+          <div class="metricValue"><span><%= stats.pending %></span></div>
+          <div class="miniBars warn"><span style="height:32%"></span><span style="height:70%"></span><span style="height:54%"></span><span style="height:84%"></span></div>
+          <div class="metricDelta">Awaiting approval</div>
+        </article>
+
+        <article class="metricCard">
+          <small>Open reports</small>
+          <div class="metricValue"><span><%= stats.reports %></span></div>
+          <div class="miniBars warn"><span style="height:32%"></span><span style="height:70%"></span><span style="height:54%"></span><span style="height:84%"></span></div>
+          <div class="metricDelta">Issues needing review</div>
+        </article>
+      </section>
+      <section class="dashboardGrid">
+        <div class="dashboardLeft">
+          <div class="splitCards">
+            <article class="contentCard">
+              <h3>Platform readiness</h3>
+              <p>Get a quick read on system health and operational flow.</p>
+              <div class="gaugeWrap">
+                <div class="gauge" style="--gauge-angle:<%= Math.round((Math.min(100, 51 + (stats.users * 2))) * 3.6) %>deg">
+                  <div class="gaugeCenter"><div><div style="font-size:2rem"><%= Math.min(100, 51 + (stats.users * 2)) %>%</div><small style="color:var(--dash-muted)">performance score</small></div></div>
+                </div>
+              </div>
+              <div class="summaryList">
+                <div class="summaryItem"><span>Priority focus</span><strong>Review and control</strong></div>
+                <div class="summaryItem"><span>Recent items</span><strong><%= recentListings ? recentListings.length : 0 %></strong></div>
+                <div class="summaryItem"><span>Team state</span><strong>Stable</strong></div>
+              </div>
+            </article>
+            <article class="contentCard">
+              <h3>Quick actions</h3>
+              <p>Suggested next steps for today.</p>
+              <div class="progressList" style="margin-top:18px">
+                <% quickActions.slice(0, 4).forEach((item, index) => { %>
+                  <div class="progressRow">
+                    <div class="progressMeta"><strong><%= item %></strong><span><%= [82, 64, 78, 58][index] || 60 %>%</span></div>
+                    <div class="progressTrack"><span style="width:<%= [82, 64, 78, 58][index] || 60 %>%"></span></div>
+                  </div>
+                <% }) %>
+              </div>
+            </article>
+          </div>
+          <article class="contentCard mapCard">
+            <div class="mapGrid"></div>
+            <div style="position:relative;z-index:2;max-width:280px">
+              <h3>Regional platform heat</h3>
+              <p>Current activity across your target rental zones.</p>
+              <ul class="bulletList" style="list-style:none;padding:0;margin:18px 0 0">
+                <li><span><span class="dotKey"></span> Kampala</span><strong>91%</strong></li>
+                <li><span><span class="dotKey" style="background:#ef8a62"></span> Juba</span><strong>86%</strong></li>
+                <li><span><span class="dotKey" style="background:#f2b176"></span> Nairobi</span><strong>79%</strong></li>
+                <li><span><span class="dotKey" style="background:#84d7a2"></span> Adjumani</span><strong>73%</strong></li>
+              </ul>
+            </div>
+            <div class="mapShape s1"></div><div class="mapShape s2"></div><div class="mapShape s3"></div>
+            <div class="mapBadge"><strong>East Africa</strong><span>High coverage</span></div>
+          </article>
+        </div>
+        <div class="dashboardRight">
+          <article class="contentCard climateCard">
+            <div class="ring"><span><%= recentInquiries && recentInquiries.length ? 81 : 74 %></span></div>
+            <div>
+              <h3 style="margin:0 0 6px">Platform health index</h3>
+              <p style="margin:0;color:rgba(255,255,255,.72)">Snapshot of how your dashboard is performing right now.</p>
+            </div>
+          </article>
+          <article class="contentCard">
+            <div class="waterRow">
+              <div class="smallRing"><span><%= (typeof recentReports !== 'undefined' && recentReports.length) ? 41 : 57 %>%</span></div>
+              <div>
+                <h3 style="margin:0 0 4px">Response rate</h3>
+                <p>Keep workflows tidy and deal with updates early.</p>
+              </div>
+            </div>
+          </article>
+          <article class="contentCard communityCard">
+            <div style="position:relative;z-index:1">
+              <small style="opacity:.82">Classic Rentals</small>
+              <h3>Keep your team aligned</h3>
+              <div class="avatarGroup"><span>A</span><span>C</span><span>R</span><span>+</span></div>
+              <div style="margin-top:12px;opacity:.84">Fast control for every property workflow</div>
+              <div class="tagRow"><span class="tagChip">Leads</span><span class="tagChip">Reviews</span><span class="tagChip">Reports</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section class="splitCards" style="margin-top:16px">
+        <article class="contentCard"><h3>Recent users</h3><p>Newest people on the platform.</p><div class="dataTableWrap"><table class="dataTable"><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody><% if (typeof recentUsers !== 'undefined' && recentUsers.length) { %><% recentUsers.forEach(u => { %><tr><td><%= u.firstName %> <%= u.lastName %></td><td><%= u.email %></td><td><span class="statusPill"><%= u.role %></span></td></tr><% }) %><% } else { %><tr><td colspan="3">No users yet.</td></tr><% } %></tbody></table></div></article>
+        <article class="contentCard"><h3>Recent reports</h3><p>Flagged items requiring attention.</p><div class="dataTableWrap"><table class="dataTable"><thead><tr><th>Listing</th><th>Status</th><th>Details</th></tr></thead><tbody><% if (recentReports.length) { %><% recentReports.forEach(item => { %><tr><td><%= item.listing?.title || 'Listing' %></td><td><span class="statusPill"><%= item.status %></span></td><td><%= item.details || item.reason || '-' %></td></tr><% }) %><% } else { %><tr><td colspan="3">No reports yet.</td></tr><% } %></tbody></table></div></article>
+      </section>
+      <section class="splitCards" style="margin-top:16px">
+        <article class="contentCard"><h3>Audit logs</h3><p>Recent platform activity and actions.</p><div class="dataTableWrap"><table class="dataTable"><thead><tr><th>Actor</th><th>Action</th><th>When</th></tr></thead><tbody><% if (typeof recentLogs !== 'undefined' && recentLogs.length) { %><% recentLogs.forEach(log => { %><tr><td><%= log.actor ? (log.actor.firstName + ' ' + log.actor.lastName) : 'System' %></td><td><%= log.action %></td><td><%= new Date(log.createdAt).toLocaleString() %></td></tr><% }) %><% } else { %><tr><td colspan="3">No audit logs yet.</td></tr><% } %></tbody></table></div></article>
+      </section>
+    </section>
+  </main>
+</div>
+
+</body>
+</html>

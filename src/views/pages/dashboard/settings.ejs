@@ -1,0 +1,66 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Settings</h2><p>Manage security, profile preferences, and platform configuration in the same dashboard style.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+
+
+    <section class="settings-clean-grid">
+      <article class="card settings-feature-card">
+        <div class="settings-icon-badge">🔐</div>
+        <div>
+          <h4>Password & Security</h4>
+          <p class="muted">Update your password using the same account security flow available in the dashboard.</p>
+        </div>
+        <form class="professionalFormGrid settings-inner-form" method="post" action="/dashboard/profile/password">
+          <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+          <div class="field"><label>Current password</label><input type="password" name="currentPassword" required></div>
+          <div class="field"><label>New password</label><input type="password" name="newPassword" required></div>
+          <div class="field wide"><label>Confirm password</label><input type="password" name="confirmPassword" required></div>
+          <div class="formActionRow settings-actions-row"><button class="primary-btn" type="submit">Change password</button></div>
+        </form>
+      </article>
+
+      <article class="card settings-feature-card">
+        <div class="settings-icon-badge">⚙</div>
+        <div>
+          <h4>Configuration Store</h4>
+          <p class="muted">Save key-value configuration records used by the platform.</p>
+        </div>
+        <form class="professionalFormGrid settings-inner-form" method="post" action="/dashboard/settings">
+          <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+          <div class="field"><label>Setting key</label><input name="key" placeholder="site.supportEmail" required></div>
+          <div class="field wide"><label>JSON or text value</label><textarea name="value" placeholder='{"enabled": true}' required></textarea></div>
+          <div class="formActionRow settings-actions-row"><button class="primary-btn" type="submit">Save setting</button></div>
+        </form>
+      </article>
+
+      <article class="card settings-feature-card settings-wide-card">
+        <div class="section-head"><div><h4>Saved Configuration</h4><span>Latest key-value records</span></div></div>
+        <div class="table-shell">
+          <table>
+            <thead><tr><th>Key</th><th>Value</th></tr></thead>
+            <tbody>
+              <% settings.forEach(item => { %>
+                <tr>
+                  <td><strong><%= item.key %></strong></td>
+                  <td><code><%= JSON.stringify(item.value) %></code></td>
+                </tr>
+              <% }) %>
+              <% if (!settings.length) { %><tr><td colspan="2">No settings have been saved yet.</td></tr><% } %>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+</body></html>

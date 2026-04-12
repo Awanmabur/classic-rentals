@@ -1,0 +1,25 @@
+<%- include('../../partials/head', { title }) %>
+<%- include('../../partials/nav') %>
+<%- include('../../partials/toast') %>
+<section class="authWrap">
+  <form class="panel authCard" id="loginForm" action="/auth/login" method="post">
+    <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+    <h1 style="margin-top:0">Welcome back</h1>
+    <p style="color:var(--muted)">Login to access your dashboard and saved listings.</p>
+    <% if (verified) { %><div class="panel" style="border-color:#184d47;background:#0d1f1f;margin-bottom:12px">Your email has been verified successfully.</div><% } %>
+    <div style="display:grid;gap:12px">
+      <label>Email
+        <input class="input" type="email" name="email" value="<%= old?.email || '' %>" placeholder="Email address" required />
+        <% if (formErrors?.email) { %><small style="color:#fca5a5"><%= formErrors.email %></small><% } %>
+      </label>
+      <label>Password
+        <input class="input" type="password" name="password" placeholder="Password" required />
+        <% if (formErrors?.password) { %><small style="color:#fca5a5"><%= formErrors.password %></small><% } %>
+      </label>
+      <button class="btn" type="submit">Login</button>
+      <a class="tinyBtn" href="/auth/forgot-password">Forgot password?</a>
+      <a class="tinyBtn" href="/auth/register">Create account</a>
+    </div>
+  </form>
+</section>
+<%- include('../../partials/footer') %>

@@ -1,0 +1,8 @@
+<% if (flash && flash.text) { %>
+  <div class="toastWrap">
+    <div class="toast <%= flash.type === 'error' ? 'isError' : flash.type === 'warn' ? 'isWarn' : 'isSuccess' %>">
+      <span><%= flash.text %></span>
+      <button type="button" class="toastClose" onclick="this.closest('.toastWrap').remove()">×</button>
+    </div>
+  </div>
+<% } %>

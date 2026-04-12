@@ -1,0 +1,96 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Profile</h2><p>Manage your personal details, security, and account overview in a professional dashboard layout.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="profilePageGrid">
+      <aside class="card profileHeroCard">
+        <div class="profileHeroTop">
+          <div class="profileAvatarLarge"><%= (currentUser.firstName || currentUser.fullName || 'U').charAt(0).toUpperCase() %></div>
+          <div class="profileHeroMeta">
+            <h3><%= currentUser.fullName || [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || 'Classic Rentals User' %></h3>
+            <p><%= currentUser.email || 'No email added' %></p>
+            <div class="profileTagRow">
+              <span class="tag"><%= (currentUser.role || 'member').replace(/-/g,' ') %></span>
+              <span class="tag"><%= currentUser.status || 'active' %></span>
+            </div>
+          </div>
+        </div>
+        <div class="profileInfoList">
+          <div class="profileInfoItem"><span>Phone</span><strong><%= currentUser.phone || 'Not added yet' %></strong></div>
+          <div class="profileInfoItem"><span>Joined</span><strong><%= currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : 'Recently' %></strong></div>
+          <div class="profileInfoItem"><span>Workspace</span><strong>Classic Rentals dashboard</strong></div>
+        </div>
+      </aside>
+
+      <div class="profileMainStack">
+<div class="profileFeatureGrid">
+          <article class="card profileFeatureCard">
+            <div class="profileFeatureIcon">✉</div>
+            <div>
+              <h4>Contact details</h4>
+              <p class="muted">Keep your email and phone updated so account notices and listing alerts reach you fast.</p>
+            </div>
+          </article>
+          <article class="card profileFeatureCard">
+            <div class="profileFeatureIcon">🔒</div>
+            <div>
+              <h4>Security</h4>
+              <p class="muted">Refresh your password and keep access to the dashboard protected across devices.</p>
+            </div>
+          </article>
+          <article class="card profileFeatureCard">
+            <div class="profileFeatureIcon">⚙</div>
+            <div>
+              <h4>Workspace</h4>
+              <p class="muted">Manage your profile in the same clean system used across listings, inquiries, and reviews.</p>
+            </div>
+          </article>
+        </div>
+
+
+        <section class="card professionalFormCard">
+          <div class="section-head">
+            <div><h4>Profile information</h4><span>Keep your account details accurate and professional.</span></div>
+            <span class="tag">Account details</span>
+          </div>
+          <form method="post" action="/dashboard/profile">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <div class="professionalFormGrid">
+              <div class="field"><label for="firstName">First name</label><input id="firstName" name="firstName" value="<%= currentUser.firstName || '' %>"></div>
+              <div class="field"><label for="lastName">Last name</label><input id="lastName" name="lastName" value="<%= currentUser.lastName || '' %>"></div>
+              <div class="field"><label for="email">Email address</label><input id="email" type="email" name="email" value="<%= currentUser.email || '' %>"></div>
+              <div class="field"><label for="phone">Phone number</label><input id="phone" name="phone" value="<%= currentUser.phone || '' %>"></div>
+            </div>
+            <div class="formActionRow"><button class="primary-btn" type="submit">Save profile</button></div>
+          </form>
+        </section>
+
+        <section class="card professionalFormCard">
+          <div class="section-head">
+            <div><h4>Change password</h4><span>Protect your account with a stronger password update.</span></div>
+            <span class="tag">Security</span>
+          </div>
+          <form method="post" action="/dashboard/profile/password">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <div class="professionalFormGrid">
+              <div class="field"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" name="currentPassword" placeholder="Enter current password"></div>
+              <div class="field"><label for="newPassword">New password</label><input id="newPassword" type="password" name="newPassword" placeholder="Create a new password"></div>
+              <div class="field wide"><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" name="confirmPassword" placeholder="Repeat the new password"></div>
+            </div>
+            <div class="formActionRow"><button class="primary-btn" type="submit">Update password</button></div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+</body></html>

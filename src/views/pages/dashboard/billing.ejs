@@ -1,0 +1,79 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Billing</h2><p>Manage your subscription, payment references, and available plans in the same clean dashboard flow.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= billingSummary?.subscriptions || 0 %></h5><p>Total subscriptions</p></div>
+      <div class="metric-box"><h5><%= billingSummary?.paidInvoices || 0 %></h5><p>Paid invoices</p></div>
+      <div class="metric-box"><h5><%= subscription ? subscription.status : 'none' %></h5><p>Current status</p></div>
+      <div class="metric-box"><h5><%= subscription?.payment?.currency || 'USD' %> <%= Number(billingSummary?.totalSpent || 0).toLocaleString() %></h5><p>Total spent</p></div>
+    </section>
+
+    <section class="dashboard-grid billing-clean-grid">
+      <div class="stack">
+        <article class="card billing-summary-card">
+          <div class="section-head"><div><h4>Current Subscription</h4><span>Latest active or recent billing record</span></div></div>
+          <% if (subscription) { %>
+            <div class="summary-list billing-summary-list">
+              <div class="summary-item"><div><b>Plan</b><small><%= subscription.plan?.name || '-' %></small></div><div class="amount"><%= subscription.status %></div></div>
+              <div class="summary-item"><div><b>Billing period</b><small><%= new Date(subscription.startsAt).toLocaleDateString() %> → <%= new Date(subscription.endsAt).toLocaleDateString() %></small></div><div class="amount"><%= subscription.payment?.currency || '' %> <%= Number(subscription.payment?.amount || 0).toLocaleString() %></div></div>
+              <div class="summary-item"><div><b>Provider</b><small><%= subscription.payment?.provider || 'manual' %></small></div><div class="amount"><%= subscription.payment?.reference || '-' %></div></div>
+            </div>
+            <% if (['trialing','active','past_due'].includes(subscription.status)) { %>
+              <form class="filter-row" method="post" action="/dashboard/billing/cancel" style="margin-top:14px;">
+                <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+                <button class="ghost-btn" type="submit">Cancel subscription</button>
+              </form>
+            <% } %>
+          <% } else { %>
+            <div class="page-banner"><h3>No active plan yet</h3><p class="muted">Choose a plan below and activate it with your provider and payment reference.</p></div>
+          <% } %>
+        </article>
+
+        <article class="card billing-summary-card">
+          <div class="section-head"><div><h4>Billing Help</h4><span>Common workspace details</span></div></div>
+          <div class="summary-list billing-summary-list">
+            <div class="summary-item"><div><b>Manual reference</b><small>Track offline or custom provider payments</small></div><div class="amount">Enabled</div></div>
+            <div class="summary-item"><div><b>Renewal control</b><small>Cancel current active plan from this page</small></div><div class="amount">Available</div></div>
+            <div class="summary-item"><div><b>Plan activation</b><small>Starts immediately after form submit</small></div><div class="amount">Instant</div></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="stack">
+        <section class="cards-grid billing-plan-grid">
+          <% plans.forEach(plan => { %>
+            <article class="card billing-plan-card">
+              <div class="section-head"><div><h4><%= plan.name %></h4><span><%= plan.audience %></span></div><span class="tag"><%= plan.interval %></span></div>
+              <p class="muted"><%= plan.description || 'No description provided.' %></p>
+              <p class="billing-price"><strong><%= plan.currency %> <%= Number(plan.amount || 0).toLocaleString() %></strong></p>
+              <div class="summary-list billing-feature-list">
+                <% (plan.features || []).slice(0, 4).forEach(feature => { %>
+                  <div class="summary-item"><div><b><%= feature.label %></b><small><%= feature.limit ? `Limit ${feature.limit}` : 'Included' %></small></div><div class="amount"><%= feature.included ? 'Yes' : 'No' %></div></div>
+                <% }) %>
+              </div>
+              <form class="filter-grid-4 filter-grid-4-subtle" method="post" action="/dashboard/billing/start">
+                <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+                <input type="hidden" name="planId" value="<%= plan._id %>">
+                <div class="field"><label>Provider</label><input name="provider" placeholder="manual"></div>
+                <div class="field"><label>Reference</label><input name="reference" placeholder="payment reference"></div>
+                <div class="field billing-plan-note"><span class="muted">Activate this plan with the details above.</span></div>
+                <div class="field-inline"><button class="primary-btn stretch-btn" type="submit">Activate plan</button></div>
+              </form>
+            </article>
+          <% }) %>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+</body></html>

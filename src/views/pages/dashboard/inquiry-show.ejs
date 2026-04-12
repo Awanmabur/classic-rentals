@@ -1,0 +1,25 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Inquiry Details</h2><p>Work on a single inquiry inside the same new dashboard layout.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-center"><div class="search"><span class="search-icon">⌕</span><input type="text" placeholder="Search this page" /></div></div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button><a class="ghost-btn" href="/dashboard/inquiries">Back</a></div>
+    </section>
+    
+<section class="profile-grid">
+  <div class="card profile-card"><div class="profile-pic"><%= (inquiry.name || inquiry.sender?.firstName || 'I').charAt(0).toUpperCase() %></div><h4><%= inquiry.name || `${inquiry.sender?.firstName || ''} ${inquiry.sender?.lastName || ''}`.trim() || 'Inquiry sender' %></h4><p class="muted"><%= inquiry.email || inquiry.sender?.email || '-' %><br><%= inquiry.phone || inquiry.sender?.phone || '-' %></p></div>
+  <div class="stack">
+    <div class="card"><div class="section-head"><div><h4>Inquiry Details</h4><span>Real status workflow</span></div><span class="status <%= inquiry.status === 'new' ? 'pending' : inquiry.status === 'contacted' ? 'published' : 'vacant' %>"><%= inquiry.status %></span></div><p><%= inquiry.message %></p></div>
+    <div class="card"><div class="section-head"><div><h4>Related Listing</h4><span>Open listing record</span></div></div><p><strong><%= inquiry.listing?.title || '-' %></strong></p><div class="actionRow"><a class="tiny-btn" href="/listings/<%= inquiry.listing?.slug %>">View listing</a><a class="tiny-btn" href="/dashboard/inquiries">Back to inquiries</a></div></div>
+    <div class="card"><form class="filter-row" method="post" action="/dashboard/inquiries/<%= inquiry._id %>/status"><% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %><select name="status"><% ['new','contacted','closed'].forEach(s=>{ %><option value="<%= s %>" <%= inquiry.status === s ? 'selected' : '' %>><%= s %></option><% }) %></select><button class="primary-btn" type="submit">Update status</button></form></div>
+  </div>
+</section>
+
+  </main>
+</div>
+</body></html>

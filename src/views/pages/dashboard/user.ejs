@@ -1,0 +1,186 @@
+<%- include('../../partials/head', { title }) %>
+<div class="dashboardShell dashboardFuture dashboardUnified" id="dashboardApp">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <button class="dashboardDrawerMask" id="dashboardDrawerMask" type="button" aria-label="Close menu"></button>
+
+  <main class="dashboardMain">
+    <section class="dashboardPanel">
+      <div class="dashboardTopbar">
+        <div class="dashboardTitle">
+          <h1>Dashboard</h1>
+          <p>Track your saved homes, published listings, and incoming inquiries from one clean workspace.</p>
+        </div>
+        <div class="topbarActions">
+          <button class="dashMenuBtn mobileOnlyDash" id="dashboardMenuToggle" type="button">☰ Menu</button>
+          <a class="dashGhostBtn" href="/dashboard/profile">Profile</a>
+          <a class="dashPrimaryBtn" href="/listings/create">Add Listing</a>
+        </div>
+      </div>
+
+      <section class="dashboardMetrics">
+        <article class="metricCard">
+          <small>Saved properties</small>
+          <div class="metricValue"><span><%= stats.saved %></span></div>
+          <div class="miniBars">
+            <span style="height:32%"></span><span style="height:74%"></span><span style="height:56%"></span><span style="height:88%"></span>
+          </div>
+          <div class="metricDelta">+ 12% from last month</div>
+        </article>
+        <article class="metricCard">
+          <small>Published listings</small>
+          <div class="metricValue"><span><%= stats.myListings %></span></div>
+          <div class="miniBars">
+            <span style="height:42%"></span><span style="height:68%"></span><span style="height:54%"></span><span style="height:82%"></span>
+          </div>
+          <div class="metricDelta">Growth across your active posts</div>
+        </article>
+        <article class="metricCard">
+          <small>Inquiry response score</small>
+          <div class="metricValue"><span><%= recentInquiries.length ? Math.min(100, 58 + (recentInquiries.length * 7)) : 75 %>%</span></div>
+          <div class="miniBars warn">
+            <span style="height:28%"></span><span style="height:48%"></span><span style="height:66%"></span><span style="height:44%"></span>
+          </div>
+          <div class="metricDelta">Fast replies help convert viewers</div>
+        </article>
+        <article class="metricCard">
+          <small>Workspace health</small>
+          <div class="metricValue"><span><%= currentUser.role === 'user' ? 'Ready' : 'Live' %></span></div>
+          <div class="miniBars">
+            <span style="height:24%"></span><span style="height:52%"></span><span style="height:72%"></span><span style="height:86%"></span>
+          </div>
+          <div class="metricDelta">Everything looks synced and updated</div>
+        </article>
+      </section>
+
+      <section class="dashboardGrid">
+        <div class="dashboardLeft">
+          <div class="splitCards">
+            <article class="contentCard">
+              <h3>Listing completion level</h3>
+              <p>How complete your rental inventory looks today.</p>
+              <% const completion = Math.min(100, 35 + (stats.myListings * 8)); %>
+              <div class="gaugeWrap">
+                <div class="gauge" style="--gauge-angle:<%= Math.round(completion * 3.6) %>deg">
+                  <div class="gaugeCenter"><div><div style="font-size:2rem"><%= completion %>%</div><small style="color:var(--dash-muted)">profile score</small></div></div>
+                </div>
+              </div>
+              <div class="summaryList">
+                <div class="summaryItem"><span>Photos uploaded</span><strong><%= Math.max(stats.myListings, 1) %> collections</strong></div>
+                <div class="summaryItem"><span>Descriptions ready</span><strong><%= Math.max(1, stats.myListings - 0) %> listings</strong></div>
+                <div class="summaryItem"><span>Pricing visible</span><strong><%= Math.max(1, Math.ceil(stats.myListings * 0.8)) %> live</strong></div>
+              </div>
+            </article>
+
+            <article class="contentCard">
+              <h3>Quick actions</h3>
+              <p>Most useful next steps for this account.</p>
+              <div class="progressList" style="margin-top:18px">
+                <% quickActions.slice(0, 4).forEach((item, index) => { %>
+                  <div class="progressRow">
+                    <div class="progressMeta"><strong><%= item %></strong><span><%= [78, 61, 84, 52][index] || 60 %>%</span></div>
+                    <div class="progressTrack"><span style="width:<%= [78, 61, 84, 52][index] || 60 %>%"></span></div>
+                  </div>
+                <% }) %>
+              </div>
+            </article>
+          </div>
+
+          <article class="contentCard mapCard">
+            <div class="mapGrid"></div>
+            <div style="position:relative;z-index:2;max-width:280px">
+              <h3>Sources usage in active markets</h3>
+              <p>Where your rental activity is strongest across the region.</p>
+              <ul class="bulletList" style="list-style:none;padding:0;margin:18px 0 0">
+                <li><span><span class="dotKey"></span> Kampala</span><strong>89%</strong></li>
+                <li><span><span class="dotKey" style="background:#ef8a62"></span> Juba</span><strong>85%</strong></li>
+                <li><span><span class="dotKey" style="background:#f2b176"></span> Nairobi</span><strong>81%</strong></li>
+                <li><span><span class="dotKey" style="background:#84d7a2"></span> Gulu</span><strong>76%</strong></li>
+              </ul>
+            </div>
+            <div class="mapShape s1"></div>
+            <div class="mapShape s2"></div>
+            <div class="mapShape s3"></div>
+            <div class="mapBadge"><strong>Uganda</strong><span>High activity</span></div>
+          </article>
+        </div>
+
+        <div class="dashboardRight">
+          <article class="contentCard climateCard">
+            <div class="ring"><span><%= recentListings.length ? 76 : 72 %></span></div>
+            <div>
+              <h3 style="margin:0 0 6px">Leads conversion index</h3>
+              <p style="margin:0;color:rgba(255,255,255,.72)">Measures how well inquiries are turning into serious follow-up conversations.</p>
+            </div>
+          </article>
+
+          <article class="contentCard">
+            <div class="waterRow">
+              <div class="smallRing"><span><%= recentInquiries.length ? 57 : 49 %>%</span></div>
+              <div>
+                <h3 style="margin:0 0 4px">Response rate</h3>
+                <p>Keep response time low so property seekers stay engaged.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="contentCard communityCard">
+            <div style="position:relative;z-index:1">
+              <small style="opacity:.82">Classic Rentals</small>
+              <h3>Let’s grow your rental reach</h3>
+              <div class="avatarGroup"><span>A</span><span>C</span><span>R</span><span>+</span></div>
+              <div style="margin-top:12px;opacity:.84">Trusted by active seekers and agents</div>
+              <div class="tagRow">
+                <span class="tagChip">Homes</span>
+                <span class="tagChip">Apartments</span>
+                <span class="tagChip">Shops</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="splitCards" style="margin-top:16px">
+        <article class="contentCard">
+          <h3>My listings</h3>
+          <p>Recent rental posts under your account.</p>
+          <div class="dataTableWrap">
+            <table class="dataTable">
+              <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+              <tbody>
+                <% if (recentListings.length) { %>
+                  <% recentListings.forEach(item => { %>
+                    <tr><td><%= item.title %></td><td><%= item.category %></td><td><span class="statusPill"><%= item.status %></span></td></tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr><td colspan="3">No listings yet.</td></tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="contentCard">
+          <h3>My inquiries</h3>
+          <p>Recent people who reached out about your rentals.</p>
+          <div class="dataTableWrap">
+            <table class="dataTable">
+              <thead><tr><th>Listing</th><th>Name</th><th>Status</th></tr></thead>
+              <tbody>
+                <% if (recentInquiries.length) { %>
+                  <% recentInquiries.forEach(item => { %>
+                    <tr><td><%= item.listing?.title || 'Listing' %></td><td><%= item.name %></td><td><span class="statusPill"><%= item.status %></span></td></tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr><td colspan="3">No inquiries yet.</td></tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+</div>
+
+</body>
+</html>
