@@ -9,6 +9,7 @@ const adminRoutes = require('./admin');
 const dashboardRoutes = require('./dashboard');
 const userRoutes = require('./users');
 const billingRoutes = require('./billing');
+const paymentRoutes = require('./payments');
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use('/admin', adminRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 router.use('/billing', billingRoutes);
+router.use('/payments', paymentRoutes);
 
 module.exports = router;

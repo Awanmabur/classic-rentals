@@ -114,12 +114,34 @@ const Subscription = require('../models/Subscription');
     {
       name: 'Starter Agent', slug: 'starter-agent', audience: 'agent', amount: 29, interval: 'monthly', trialDays: 7,
       description: 'For individual agents posting and managing active listings.',
-      features: [{ key: 'listings', label: 'Up to 25 active listings', limit: 25 }, { key: 'featured', label: '1 featured slot', limit: 1 }],
+      features: [
+        { key: 'listings', label: 'Up to 25 active listings', limit: 25 },
+        { key: 'featured', label: '1 featured slot', limit: 1 },
+        { key: 'verification', label: 'Paid verification requests', included: true, limit: 3 },
+        { key: 'analytics', label: 'Billing and listing analytics', included: true },
+      ],
+    },
+    {
+      name: 'Premium Agent', slug: 'premium-agent', audience: 'agent', amount: 79, interval: 'monthly', trialDays: 0,
+      description: 'For higher-volume teams that want monetized premium inventory and recurring visibility.',
+      features: [
+        { key: 'listings', label: 'Up to 120 active listings', limit: 120 },
+        { key: 'featured', label: '10 featured slots', limit: 10 },
+        { key: 'verification', label: 'Paid verification requests', included: true, limit: 25 },
+        { key: 'exact-map', label: 'Premium map/location upsell', included: true },
+        { key: 'analytics', label: 'Advanced analytics', included: true },
+      ],
     },
     {
       name: 'Growth Office', slug: 'growth-office', audience: 'admin', amount: 99, interval: 'monthly', trialDays: 0,
-      description: 'For teams managing inventory, staff, and moderation.',
-      features: [{ key: 'listings', label: 'Up to 250 active listings', limit: 250 }, { key: 'staff', label: '3 admin seats', limit: 3 }],
+      description: 'For teams managing inventory, staff, moderation, and monetization operations.',
+      features: [
+        { key: 'listings', label: 'Up to 250 active listings', limit: 250 },
+        { key: 'featured', label: '25 featured slots', limit: 25 },
+        { key: 'staff', label: '3 admin seats', limit: 3 },
+        { key: 'verification', label: 'Paid verification requests', included: true, limit: 100 },
+        { key: 'analytics', label: 'Advanced analytics', included: true },
+      ],
     },
   ]);
 

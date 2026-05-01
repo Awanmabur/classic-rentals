@@ -1,67 +1,249 @@
 <%- include('../../partials/head', { title }) %>
-<div class="dashboardShell dashboardUnified dashboardFuture" id="dashboardApp">
+<%
+  const draft = old || {};
+  const val = (key, fallback = '') => (draft && draft[key] !== undefined && draft[key] !== null && draft[key] !== '' ? draft[key] : fallback);
+  const price = listing?.price || {};
+  const location = listing?.location || {};
+  const specs = listing?.specs || {};
+  const intel = listing?.apartmentIntel || {};
+  const amenityText = Array.isArray(listing?.amenities) ? listing.amenities.join(', ') : '';
+  const dateInput = (value) => value ? new Date(value).toISOString().slice(0, 16) : '';
+  const monet = monetization || {};
+  const ent = monet.entitlements || {};
+  const rem = monet.remaining || {};
+  const useFeaturedValue = draft?.useFeaturedSlot || listing?.monetization?.featuredRequested;
+%>
+<div class="app" id="appShell">
   <%- include('../../partials/dashboard-sidebar') %>
-  <button class="dashboardDrawerMask" id="dashboardDrawerMask" type="button" aria-label="Close menu"></button>
-
-  <main class="dashboardMain">
-    <section class="dashboardPanel dashboardFormShell">
-      <div class="dashboardTopbar">
+  <main class="main">
+    <section class="card dashboardFormShell listingWizardShell">
+      <div class="dashboardTopbar listingWizardTopbar">
         <div class="dashboardTitle">
           <h1>Edit listing</h1>
-          <p>Update content, pricing, amenities, and images without leaving the main dashboard experience.</p>
+          <p>Update the listing in a guided workspace without leaving the main dashboard flow.</p>
         </div>
-        <div class="topbarActions">
-          <button class="dashMenuBtn mobileOnlyDash" id="dashboardMenuToggle" type="button">☰ Menu</button>
+        <div class="topbarActions listingWizardActions">
           <a class="dashGhostBtn" href="/dashboard/manage-listings">Manage listings</a>
-          <a class="dashPrimaryBtn" href="/listings/<%= listing.slug %>">Preview</a>
+          <a class="dashGhostBtn" href="/listings/<%= listing.slug %>">Preview</a>
+          <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu">☰</button>
         </div>
       </div>
 
-      <article class="dashCard formHintCard">
-        <strong>Editing workspace</strong>
-        <p class="muted" style="margin:0">Keep all important details current so the listing stays clean, trusted, and easy to browse.</p>
-      </article>
+      <div class="listingWizardProgressRow">
+        <button class="wizardStepChip active" type="button" data-step-target="0"><span>1</span> Basics</button>
+        <button class="wizardStepChip" type="button" data-step-target="1"><span>2</span> Pricing &amp; location</button>
+        <button class="wizardStepChip" type="button" data-step-target="2"><span>3</span> Features</button>
+        <button class="wizardStepChip" type="button" data-step-target="3"><span>4</span> Media &amp; publish</button>
+        <div class="wizardStatusBox">
+          <strong id="autosaveStatus">Autosave ready</strong>
+          <small>Your edit draft is saved in this browser as you move through each step.</small>
+        </div>
+      </div>
 
-      <form class="tableCard dashboardFormCard" action="/listings/<%= listing._id %>/update" method="post" enctype="multipart/form-data">
+      <section class="page-banner" style="margin:0 0 16px">
+        <h3>Current plan: <%= ent.planName || 'Free' %></h3>
+        <p class="muted">Listings left: <strong><%= rem.listings === Infinity ? 'Unlimited' : rem.listings %></strong> • Featured slots left: <strong><%= rem.featured === Infinity ? 'Unlimited' : rem.featured %></strong>. Upgrade or manage monetization in <a href="/dashboard/billing">Billing</a>.</p>
+      </section>
+
+      <form class="tableCard dashboardFormCard listingWizardForm" action="/listings/<%= listing._id %>/update?<%= csrfToken ? `_csrf=${encodeURIComponent(csrfToken)}` : "" %>" method="post" enctype="multipart/form-data" id="listingWizardForm" data-autosave-key="classic-edit-listing-<%= listing._id %>" novalidate>
         <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-        <div class="formSectionTitle">
-          <div>
-            <h3 style="margin:0">Listing details</h3>
-            <p class="muted" style="margin:6px 0 0">Review the main information first, then update media below.</p>
+
+        <section class="wizardPanel active" data-step="0">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Listing basics</h3>
+              <p class="muted" style="margin:6px 0 0">Refresh the name, category, and main identity first.</p>
+            </div>
+            <span class="badgeSoft">Step 1 of 4</span>
           </div>
-          <span class="badgeSoft">Classic Rentals standard form</span>
-        </div>
 
-        <div class="formGrid two">
-          <label>Title<input class="input" name="title" value="<%= listing.title %>" required> <% if (formErrors?.title) { %><small style="color:#dc2626"><%= formErrors.title %></small><% } %></label>
-          <label>Category<select class="input" name="category" required><% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(c=>{ %><option value="<%= c %>" <%= listing.category===c?'selected':'' %>><%= c %></option><% }) %></select> <% if (formErrors?.category) { %><small style="color:#dc2626"><%= formErrors.category %></small><% } %></label>
-          <label>Purpose<select class="input" name="purpose"><option value="rent" <%= listing.purpose==='rent'?'selected':'' %>>Rent</option><option value="sale" <%= listing.purpose==='sale'?'selected':'' %>>Sale</option></select></label>
-          <label>Price<input class="input" type="number" name="priceAmount" value="<%= listing.price?.amount || '' %>" min="0" required> <% if (formErrors?.priceAmount) { %><small style="color:#dc2626"><%= formErrors.priceAmount %></small><% } %></label>
-          <label>Currency<input class="input" name="currency" value="<%= listing.price?.currency || 'USD' %>"></label>
-          <label>Price unit<select class="input" name="priceUnit"><% ['day','month','year','one-time'].forEach(u=>{ %><option value="<%= u %>" <%= listing.price?.unit===u?'selected':'' %>><%= u %></option><% }) %></select></label>
-          <label>City<input class="input" name="city" value="<%= listing.location?.city || 'Juba' %>"></label>
-          <label>Area<input class="input" name="area" value="<%= listing.location?.area || '' %>" required> <% if (formErrors?.area) { %><small style="color:#dc2626"><%= formErrors.area %></small><% } %></label>
-          <label>Address<input class="input" name="addressLine" value="<%= listing.location?.addressLine || '' %>"></label>
-          <label>Latitude<input class="input" name="latitude" value="<%= listing.location?.latitude || '' %>"> <% if (formErrors?.latitude) { %><small style="color:#dc2626"><%= formErrors.latitude %></small><% } %></label>
-          <label>Longitude<input class="input" name="longitude" value="<%= listing.location?.longitude || '' %>"> <% if (formErrors?.longitude) { %><small style="color:#dc2626"><%= formErrors.longitude %></small><% } %></label>
-          <label>Bedrooms<input class="input" type="number" name="bedrooms" value="<%= listing.specs?.bedrooms || '' %>"></label>
-          <label>Bathrooms<input class="input" type="number" name="bathrooms" value="<%= listing.specs?.bathrooms || '' %>"></label>
-          <label>Size sqm<input class="input" type="number" name="sizeSqm" value="<%= listing.specs?.sizeSqm || '' %>"></label>
-          <label>Year<input class="input" type="number" name="year" value="<%= listing.specs?.year || '' %>"></label>
-          <label>Fuel type<input class="input" name="fuelType" value="<%= listing.specs?.fuelType || '' %>"></label>
-          <label>Transmission<input class="input" name="transmission" value="<%= listing.specs?.transmission || '' %>"></label>
-          <label>Amenities<input class="input" name="amenities" value="<%= (listing.amenities || []).join(', ') %>"></label>
-          <label>Images<input class="input" type="file" name="images" accept="image/*" multiple></label>
-        </div>
+          <div class="formGrid autoFit">
+            <label>Title
+              <input class="input" name="title" value="<%= val('title', listing.title || '') %>" required>
+              <% if (formErrors?.title) { %><small style="color:#dc2626"><%= formErrors.title %></small><% } %>
+            </label>
+            <label>Category
+              <select class="input" name="category" required>
+                <% ['house','apartment','land','car','shop','office','warehouse','shortstay'].forEach(c=>{ %>
+                  <option value="<%= c %>" <%= val('category', listing.category)===c?'selected':'' %>><%= c %></option>
+                <% }) %>
+              </select>
+              <% if (formErrors?.category) { %><small style="color:#dc2626"><%= formErrors.category %></small><% } %>
+            </label>
+            <label>Purpose
+              <select class="input" name="purpose">
+                <option value="rent" <%= val('purpose', listing.purpose || 'rent')==='rent'?'selected':'' %>>Rent</option>
+                <option value="sale" <%= val('purpose', listing.purpose || 'rent')==='sale'?'selected':'' %>>Sale</option>
+              </select>
+            </label>
+            <label>City
+              <input class="input" name="city" value="<%= val('city', location.city || 'Juba') %>">
+            </label>
+          </div>
+        </section>
 
-        <label style="margin-top:14px">Description<textarea class="input" name="description" rows="7" required><%= listing.description %></textarea> <% if (formErrors?.description) { %><small style="color:#dc2626"><%= formErrors.description %></small><% } %></label>
+        <section class="wizardPanel" data-step="1">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Pricing and location</h3>
+              <p class="muted" style="margin:6px 0 0">Adjust the commercial details and exact location.</p>
+            </div>
+            <span class="badgeSoft">Step 2 of 4</span>
+          </div>
 
-        <% if ((listing.images || []).length) { %>
-          <div style="margin-top:18px">
-            <div class="formSectionTitle">
+          <div class="formGrid autoFit">
+            <label>Price
+              <input class="input" type="number" name="priceAmount" value="<%= val('priceAmount', price.amount || '') %>" min="0" required>
+              <% if (formErrors?.priceAmount) { %><small style="color:#dc2626"><%= formErrors.priceAmount %></small><% } %>
+            </label>
+            <label>Currency
+              <input class="input" name="currency" value="<%= val('currency', price.currency || 'USD') %>">
+            </label>
+            <label>Price unit
+              <select class="input" name="priceUnit">
+                <% ['day','month','year','one-time'].forEach(u=>{ %>
+                  <option value="<%= u %>" <%= val('priceUnit', price.unit || 'month')===u?'selected':'' %>><%= u %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Area
+              <input class="input" name="area" value="<%= val('area', location.area || '') %>" required>
+              <% if (formErrors?.area) { %><small style="color:#dc2626"><%= formErrors.area %></small><% } %>
+            </label>
+            <label>Address
+              <input class="input" name="addressLine" value="<%= val('addressLine', location.addressLine || '') %>">
+            </label>
+            <label>Latitude
+              <input class="input" name="latitude" value="<%= val('latitude', location.latitude || '') %>">
+              <% if (formErrors?.latitude) { %><small style="color:#dc2626"><%= formErrors.latitude %></small><% } %>
+            </label>
+            <label>Longitude
+              <input class="input" name="longitude" value="<%= val('longitude', location.longitude || '') %>">
+              <% if (formErrors?.longitude) { %><small style="color:#dc2626"><%= formErrors.longitude %></small><% } %>
+            </label>
+            <label>Survey fee / map access
+              <select class="input" name="surveyFeePaid">
+                <option value="false" <%= val('surveyFeePaid', intel.surveyFeePaid ? 'true' : 'false') === 'true' ? '' : 'selected' %>>No - keep exact map hidden</option>
+                <option value="true" <%= val('surveyFeePaid', intel.surveyFeePaid ? 'true' : 'false') === 'true' ? 'selected' : '' %>>Yes - unlock exact map location</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="wizardPanel" data-step="2">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Property features</h3>
+              <p class="muted" style="margin:6px 0 0">Keep the key specs tidy and easy to compare.</p>
+            </div>
+            <span class="badgeSoft">Step 3 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label>Bedrooms
+              <input class="input" type="number" name="bedrooms" value="<%= val('bedrooms', specs.bedrooms || '') %>">
+            </label>
+            <label>Bathrooms
+              <input class="input" type="number" name="bathrooms" value="<%= val('bathrooms', specs.bathrooms || '') %>">
+            </label>
+            <label>Size sqm
+              <input class="input" type="number" name="sizeSqm" value="<%= val('sizeSqm', specs.sizeSqm || '') %>">
+            </label>
+            <label>Year
+              <input class="input" type="number" name="year" value="<%= val('year', specs.year || '') %>">
+            </label>
+            <label>Fuel type
+              <input class="input" name="fuelType" value="<%= val('fuelType', specs.fuelType || '') %>">
+            </label>
+            <label>Transmission
+              <input class="input" name="transmission" value="<%= val('transmission', specs.transmission || '') %>">
+            </label>
+            <label>Amenities
+              <input class="input" name="amenities" value="<%= val('amenities', amenityText) %>" placeholder="Parking, Wi-Fi, security, garden...">
+            </label>
+            <label>Security rating
+              <select class="input" name="securityRating">
+                <% [['unknown','Unknown'],['low','Low'],['moderate','Moderate'],['good','Good'],['excellent','Excellent']].forEach(([value,label])=>{ %>
+                  <option value="<%= value %>" <%= val('securityRating', intel.securityRating || 'unknown')===value?'selected':'' %>><%= label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Traffic indicator
+              <select class="input" name="trafficIndicator">
+                <% [['unknown','Unknown'],['light','Light'],['moderate','Moderate'],['heavy','Heavy']].forEach(([value,label])=>{ %>
+                  <option value="<%= value %>" <%= val('trafficIndicator', intel.trafficIndicator || 'unknown')===value?'selected':'' %>><%= label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Available from
+              <input class="input" type="datetime-local" name="availableFrom" value="<%= val('availableFrom', dateInput(intel.availableFrom)) %>">
+            </label>
+            <label>Expected tenant leaving date
+              <input class="input" type="datetime-local" name="expectedVacateAt" value="<%= val('expectedVacateAt', dateInput(intel.expectedVacateAt)) %>">
+            </label>
+          </div>
+        </section>
+
+        <section class="wizardPanel" data-step="3">
+          <div class="formSectionTitle">
+            <div>
+              <h3 style="margin:0">Media and publish</h3>
+              <p class="muted" style="margin:6px 0 0">Upload fresh media, refine the description, and review current images.</p>
+            </div>
+            <span class="badgeSoft">Step 4 of 4</span>
+          </div>
+
+          <div class="formGrid autoFit">
+            <label class="listingWizardWide">Images and room video
+              <input class="input" type="file" name="images" accept="image/*,video/*" multiple>
+              <small class="muted">Upload photos plus a room appearance video so visitors can inspect the space before booking.</small>
+            </label>
+            <div class="listingWizardWide page-banner" style="margin:0">
+              <h3 style="margin:0 0 8px">Monetization tools</h3>
+              <div class="formGrid autoFit">
+                <label>Listing tier
+                  <select class="input" name="tier">
+                    <option value="free" <%= val('tier', listing?.monetization?.tier || 'free')==='free' ? 'selected' : '' %>>Free listing</option>
+                    <option value="standard" <%= val('tier', listing?.monetization?.tier || 'free')==='standard' ? 'selected' : '' %>>Standard paid listing</option>
+                    <option value="premium" <%= val('tier', listing?.monetization?.tier || 'free')==='premium' ? 'selected' : '' %>>Premium listing</option>
+                  </select>
+                </label>
+                <label>Lead access
+                  <select class="input" name="leadAccess">
+                    <option value="open" <%= val('leadAccess', listing?.monetization?.leadAccess || 'open')==='open' ? 'selected' : '' %>>Open inquiries</option>
+                    <option value="paid" <%= val('leadAccess', listing?.monetization?.leadAccess || 'open')==='paid' ? 'selected' : '' %>>Paid / qualified leads</option>
+                  </select>
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="useFeaturedSlot" value="true" <%= val('useFeaturedSlot', listing?.monetization?.featuredRequested ? 'true' : '') ? 'checked' : '' %> <%= (rem.featured === 0 && !(listing?.featured)) ? '' : '' %>> Use featured slot</label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="verificationRequested" value="true" <%= val('verificationRequested', listing?.monetization?.verificationRequested ? 'true' : '') ? 'checked' : '' %>> Request paid verification badge</label>
+                <label>Viewing fee amount
+                  <input class="input" type="number" min="0" step="0.01" name="viewingFeeAmount" value="<%= val('viewingFeeAmount', listing?.monetization?.viewingFeeAmount || '') %>">
+                </label>
+                <label>Viewing fee currency
+                  <input class="input" name="viewingFeeCurrency" value="<%= val('viewingFeeCurrency', listing?.monetization?.viewingFeeCurrency || listing?.price?.currency || 'USD') %>">
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="viewingFeeEnabled" value="true" <%= val('viewingFeeEnabled', listing?.monetization?.viewingFeeEnabled ? 'true' : '') ? 'checked' : '' %>> Charge viewing fee</label>
+                <label>Reservation fee amount
+                  <input class="input" type="number" min="0" step="0.01" name="reservationFeeAmount" value="<%= val('reservationFeeAmount', listing?.monetization?.reservationFeeAmount || '') %>">
+                </label>
+                <label>Reservation fee currency
+                  <input class="input" name="reservationFeeCurrency" value="<%= val('reservationFeeCurrency', listing?.monetization?.reservationFeeCurrency || listing?.price?.currency || 'USD') %>">
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="reservationFeeEnabled" value="true" <%= val('reservationFeeEnabled', listing?.monetization?.reservationFeeEnabled ? 'true' : '') ? 'checked' : '' %>> Charge reservation fee</label>
+              </div>
+              <small class="muted">Use plans, boosts, verification, and booking fees together. Featured placement only applies when your billing plan has a free featured slot available.</small>
+            </div>
+            <label class="listingWizardWide">Description
+              <textarea class="input" name="description" rows="7" required><%= val('description', listing.description || '') %></textarea>
+              <% if (formErrors?.description) { %><small style="color:#dc2626"><%= formErrors.description %></small><% } %>
+            </label>
+          </div>
+
+          <% if ((listing.images || []).length) { %>
+            <div class="formSectionTitle" style="margin-top:4px;">
               <div>
-                <h3 style="margin:0">Listing media</h3>
-                <p class="muted" style="margin:6px 0 0">Choose a primary image and remove old media when needed.</p>
+                <h3 style="margin:0">Current media</h3>
+                <p class="muted" style="margin:6px 0 0">Choose a primary image or remove media you no longer want.</p>
               </div>
             </div>
             <div class="mediaGrid">
@@ -72,29 +254,71 @@
                     <span><%= img.isPrimary ? 'Primary image' : 'Listing image' %></span>
                     <div class="formActionRow" style="margin-top:0">
                       <% if (!img.isPrimary) { %>
-                        <form action="/listings/<%= listing._id %>/images/<%= img.publicId %>/primary" method="post">
-                          <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-                          <button class="tinyBtn" type="submit">Make primary</button>
-                        </form>
+                        <button class="tinyBtn" type="submit" form="make-primary-<%= img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>">Make primary</button>
                       <% } %>
-                      <form action="/listings/<%= listing._id %>/images/<%= img.publicId %>/delete" method="post" onsubmit="return confirm('Remove this image?')">
-                        <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-                        <button class="tinyBtn" type="submit">Delete image</button>
-                      </form>
+                      <button class="tinyBtn" type="submit" form="delete-image-<%= img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>" onclick="return confirm('Remove this image?')">Delete image</button>
                     </div>
                   </figcaption>
                 </figure>
               <% }) %>
             </div>
-          </div>
-        <% } %>
+          <% } %>
+          <% if ((listing.videos || []).length) { %>
+            <div class="formSectionTitle" style="margin-top:4px;">
+              <div>
+                <h3 style="margin:0">Current room videos</h3>
+                <p class="muted" style="margin:6px 0 0">Videos help renters understand the room before booking.</p>
+              </div>
+            </div>
+            <div class="mediaGrid">
+              <% listing.videos.forEach(video => { %>
+                <figure class="mediaCard">
+                  <video src="<%= video.url %>" controls style="width:100%;border-radius:12px"></video>
+                  <figcaption style="display:grid;gap:10px;margin-top:10px">
+                    <span>Room video</span>
+                  </figcaption>
+                </figure>
+              <% }) %>
+            </div>
+          <% } %>
 
-        <div class="formActionRow">
-          <button class="btn" type="submit">Save changes</button>
-          <a class="btn alt" href="/dashboard/manage-listings">Back</a>
+          <div class="listingWizardReview">
+            <div class="mini-stat"><small>Listing</small><strong><%= listing.slug %></strong></div>
+            <div class="mini-stat"><small>Status</small><strong><%= listing.status || 'draft' %></strong></div>
+            <div class="mini-stat"><small>Route</small><div style="margin-top:6px"><a class="dashGhostBtn" href="/listings/<%= listing._id %>/edit" style="display:inline-flex;max-width:100%;white-space:normal;word-break:break-all;line-height:1.35;padding:6px 10px;font-size:.68rem">/listings/<%= listing._id %>/edit</a></div></div>
+          </div>
+        </section>
+
+        <div class="formActionRow listingWizardFooter">
+          <button class="btn alt" type="button" id="wizardPrevBtn">Previous</button>
+          <div class="listingWizardFooterRight">
+            <button class="btn alt" type="button" id="wizardNextBtn">Next section</button>
+            <button class="btn" type="submit" id="wizardSubmitBtn">Save changes</button>
+            <a class="btn alt" href="/dashboard/manage-listings">Cancel</a>
+          </div>
         </div>
       </form>
+
+      <% if ((listing.images || []).length) { %>
+        <% listing.images.forEach(img => { %>
+          <% const safeImgId = img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>
+          <% if (!img.isPrimary) { %>
+            <form id="make-primary-<%= safeImgId %>" action="/listings/images/primary" method="post" style="display:none">
+              <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+              <input type="hidden" name="listingId" value="<%= listing._id %>">
+              <input type="hidden" name="listingId" value="<%= listing._id %>">
+            <input type="hidden" name="publicId" value="<%= img.publicId %>">
+            </form>
+          <% } %>
+          <form id="delete-image-<%= safeImgId %>" action="/listings/images/delete" method="post" style="display:none">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <input type="hidden" name="listingId" value="<%= listing._id %>">
+              <input type="hidden" name="publicId" value="<%= img.publicId %>">
+          </form>
+        <% }) %>
+      <% } %>
     </section>
   </main>
 </div>
+<script defer src="/js/listing-wizard.js"></script>
 </body></html>

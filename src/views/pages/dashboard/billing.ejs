@@ -11,11 +11,14 @@
       <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">◐</button></div>
     </section>
 
+    <% const monet = monetization || {}; const ent = monet.entitlements || {}; const rem = monet.remaining || {}; const usage = monet.usage || {}; %>
     <section class="metric-strip compact-metrics">
       <div class="metric-box"><h5><%= billingSummary?.subscriptions || 0 %></h5><p>Total subscriptions</p></div>
       <div class="metric-box"><h5><%= billingSummary?.paidInvoices || 0 %></h5><p>Paid invoices</p></div>
       <div class="metric-box"><h5><%= subscription ? subscription.status : 'none' %></h5><p>Current status</p></div>
       <div class="metric-box"><h5><%= subscription?.payment?.currency || 'USD' %> <%= Number(billingSummary?.totalSpent || 0).toLocaleString() %></h5><p>Total spent</p></div>
+      <div class="metric-box"><h5><%= rem.listings === Infinity ? '∞' : rem.listings %></h5><p>Listings left</p></div>
+      <div class="metric-box"><h5><%= rem.featured === Infinity ? '∞' : rem.featured %></h5><p>Featured slots left</p></div>
     </section>
 
     <section class="dashboard-grid billing-clean-grid">
@@ -35,16 +38,17 @@
               </form>
             <% } %>
           <% } else { %>
-            <div class="page-banner"><h3>No active plan yet</h3><p class="muted">Choose a plan below and activate it with your provider and payment reference.</p></div>
+            <div class="page-banner"><h3>No active plan yet</h3><p class="muted">Choose a plan below and activate it manually or send it to Pesapal checkout.</p></div>
           <% } %>
         </article>
 
         <article class="card billing-summary-card">
-          <div class="section-head"><div><h4>Billing Help</h4><span>Common workspace details</span></div></div>
+          <div class="section-head"><div><h4>Monetization toolkit</h4><span>What your current plan can unlock right now</span></div></div>
           <div class="summary-list billing-summary-list">
-            <div class="summary-item"><div><b>Manual reference</b><small>Track offline or custom provider payments</small></div><div class="amount">Enabled</div></div>
-            <div class="summary-item"><div><b>Renewal control</b><small>Cancel current active plan from this page</small></div><div class="amount">Available</div></div>
-            <div class="summary-item"><div><b>Plan activation</b><small>Starts immediately after form submit</small></div><div class="amount">Instant</div></div>
+            <div class="summary-item"><div><b>Active plan</b><small>Current monetization base</small></div><div class="amount"><%= ent.planName || 'Free' %></div></div>
+            <div class="summary-item"><div><b>Active listings</b><small>Used versus your allowed quota</small></div><div class="amount"><%= usage.listings || 0 %> / <%= ent.listingsLimit === Infinity ? '∞' : ent.listingsLimit %></div></div>
+            <div class="summary-item"><div><b>Featured slots</b><small>Boost listing visibility on search and home</small></div><div class="amount"><%= usage.featured || 0 %> / <%= ent.featuredLimit === Infinity ? '∞' : ent.featuredLimit %></div></div>
+            <div class="summary-item"><div><b>Verification requests</b><small>Paid trust badge support</small></div><div class="amount"><%= ent.canRequestVerification ? 'Enabled' : 'Upgrade plan' %></div></div>
           </div>
         </article>
       </div>
@@ -64,10 +68,10 @@
               <form class="filter-grid-4 filter-grid-4-subtle" method="post" action="/dashboard/billing/start">
                 <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
                 <input type="hidden" name="planId" value="<%= plan._id %>">
-                <div class="field"><label>Provider</label><input name="provider" placeholder="manual"></div>
-                <div class="field"><label>Reference</label><input name="reference" placeholder="payment reference"></div>
-                <div class="field billing-plan-note"><span class="muted">Activate this plan with the details above.</span></div>
-                <div class="field-inline"><button class="primary-btn stretch-btn" type="submit">Activate plan</button></div>
+                <div class="field"><label>Provider</label><select name="provider"><option value="pesapal">Pesapal checkout</option><option value="manual">Manual</option></select></div>
+                <div class="field"><label>Reference</label><input name="reference" placeholder="manual payment reference"></div>
+                <div class="field billing-plan-note"><span class="muted">Pesapal redirects to payment. Manual marks the plan as paid immediately.</span></div>
+                <div class="field-inline"><button class="primary-btn stretch-btn" type="submit">Continue</button></div>
               </form>
             </article>
           <% }) %>

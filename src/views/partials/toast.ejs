@@ -1,7 +1,8 @@
-<% if (flash && flash.text) { %>
+<% const toastFlash = typeof flash !== 'undefined' ? flash : null; %>
+<% if (toastFlash && toastFlash.text) { %>
   <div class="toastWrap">
-    <div class="toast <%= flash.type === 'error' ? 'isError' : flash.type === 'warn' ? 'isWarn' : 'isSuccess' %>">
-      <span><%= flash.text %></span>
+    <div class="toast <%= toastFlash.type === 'error' ? 'isError' : toastFlash.type === 'warn' ? 'isWarn' : 'isSuccess' %>">
+      <span><%= toastFlash.text %></span>
       <button type="button" class="toastClose" onclick="this.closest('.toastWrap').remove()">×</button>
     </div>
   </div>

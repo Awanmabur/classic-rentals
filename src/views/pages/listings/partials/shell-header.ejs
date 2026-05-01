@@ -1,0 +1,123 @@
+<body>
+    <!-- topbar -->
+    <div class="topbar">
+        <div class="wrap">
+            <div class="topbarRow">
+                <div class="chip"><span class="dot"></span><b>Verified Listings</b><span>•</span><span>Fast
+                        Search</span><span>•</span><span>Premium Support</span></div>
+                <div class="topLinks">
+                    <a class="link" href="/">Filters</a>
+                    <a class="link" href="/">Featured</a>
+                    <a class="link" href="#footer">Contact</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- navbar -->
+    <header class="nav" id="top">
+        <div class="wrap">
+            <div class="navRow">
+                <a class="brand" href="/" aria-label="Classic Rentals Home">
+                    <div class="logo" aria-hidden="true"></div>
+                    <div class="brandTitle">
+                        <b>Classic Rentals</b>
+                        <span>Cars • Homes • Land • Shops</span>
+                    </div>
+                </a>
+
+                <nav class="navLinks" aria-label="Primary">
+                    <a href="/listings">Browse all</a>
+                    <a href="/listings">Featured picks</a>
+                    <a href="/listings">Newest listings</a>
+                    <a href="#footer">Contact</a>
+                </nav>
+
+                <div class="navActions">
+                    <button class="iconBtn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme" type="button">
+                        <svg class="ico" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 14.5A8.5 8.5 0 1 1 9.5 3a7 7 0 0 0 11.5 11.5Z" stroke="currentColor"
+                                stroke-width="1.8" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+
+                    <button class="btn hideSmText" id="navSearchBtn" aria-label="Jump to filters" type="button">
+                        <svg class="ico" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" />
+                        </svg>
+                        <span class="txt">Filters</span>
+                    </button>
+
+                    <button class="btn primary hideSmText" id="listBtn" type="button">
+                        <svg class="ico" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" />
+                        </svg>
+                        <span class="txt">List</span>
+                    </button>
+
+                    <button class="iconBtn hamburger" id="menuBtn" title="Menu" aria-label="Open menu" type="button">
+                        <svg class="ico" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- mobile drawer -->
+    <div class="drawerBack" id="drawerBack" aria-hidden="true">
+        <aside class="drawer" role="dialog" aria-modal="true" aria-label="Menu">
+            <div class="drawerTop">
+                <b>Menu</b>
+                <button class="iconBtn" id="closeDrawer" aria-label="Close menu" type="button">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="drawerBrand">
+                <div class="drawerLogo">CR</div>
+                <div>
+                    <strong>Classic Rentals</strong>
+                    <small>Browse verified rentals, agents and newest listings.</small>
+                </div>
+            </div>
+
+            <div class="drawerQuick">
+                <button class="btn" id="drawerTheme" type="button">Toggle Theme</button>
+                <button class="btn primary" id="drawerList" type="button">List Now</button>
+            </div>
+
+            <div class="drawerNav">
+                <a href="#filters" data-close-drawer>
+                    <span class="drawerLinkIcon">⌕</span>
+                    <span>Filters<span class="drawerLinkMeta">Search by category and location</span></span>
+                </a>
+                <a href="#featured" data-close-drawer>
+                    <span class="drawerLinkIcon">★</span>
+                    <span>Featured<span class="drawerLinkMeta">Handpicked listings</span></span>
+                </a>
+                <a href="#newest" data-close-drawer>
+                    <span class="drawerLinkIcon">↻</span>
+                    <span>Newest<span class="drawerLinkMeta">Freshly posted rentals</span></span>
+                </a>
+                <a href="#footer" data-close-drawer>
+                    <span class="drawerLinkIcon">✉</span>
+                    <span>Contact<span class="drawerLinkMeta">Footer links and contact details</span></span>
+                </a>
+            </div>
+
+            <div class="drawerBottom">
+                <button class="btn" id="navSearchBtnDrawer" type="button">Jump to Filters</button>
+                <a class="btn primary" href="/" data-close-drawer>Home</a>
+            </div>
+        </aside>
+    </div>
+
+    <!-- LISTINGS BANNER -->

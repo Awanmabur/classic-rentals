@@ -4,8 +4,10 @@ const ApiError = require('../utils/ApiError');
 const storage = multer.memoryStorage();
 
 function fileFilter(_req, file, cb) {
-  if (!file.mimetype.startsWith('image/')) {
-    return cb(new ApiError(400, 'Only image uploads are allowed'));
+  const isImage = file.mimetype.startsWith('image/');
+  const isVideo = file.mimetype.startsWith('video/');
+  if (!isImage && !isVideo) {
+    return cb(new ApiError(400, 'Only image and video uploads are allowed'));
   }
   cb(null, true);
 }
@@ -13,5 +15,5 @@ function fileFilter(_req, file, cb) {
 module.exports = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024, files: 12 },
+  limits: { fileSize: 50 * 1024 * 1024, files: 16 },
 });

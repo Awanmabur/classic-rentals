@@ -20,6 +20,7 @@
             <div class="metric-box"><h5><%= listing.views || 0 %></h5><p>Views</p></div>
             <div class="metric-box"><h5><%= listing.verified ? 'Yes' : 'No' %></h5><p>Verified</p></div>
             <div class="metric-box"><h5><%= listing.featured ? 'Yes' : 'No' %></h5><p>Featured</p></div>
+            <div class="metric-box"><h5><%= listing.monetization?.tier || 'free' %></h5><p>Monetization tier</p></div>
           </div>
           <div class="page-banner" style="margin-top:14px;"><h3>Description</h3><p><%= listing.description || 'No description provided.' %></p></div>
           <div class="three-col" style="margin-top:14px;">
@@ -47,14 +48,43 @@
           </div>
         </div>
         <div class="card">
-          <div class="section-head"><div><h4>Location & publishing</h4><span>Useful detail for review and action</span></div></div>
+          <%
+  const intel = listing.apartmentIntel || {};
+  const hasPaidSurveyMap = Boolean(intel.surveyFeePaid && listing.location?.latitude && listing.location?.longitude);
+  const roomVideo = (listing.videos || [])[0];
+  const securityLabelMap = { unknown: 'Unknown', low: 'Low', moderate: 'Moderate', good: 'Good', excellent: 'Excellent' };
+  const trafficLabelMap = { unknown: 'Unknown', light: 'Light', moderate: 'Moderate', heavy: 'Heavy' };
+%>
+        <div class="section-head"><div><h4>Location & publishing</h4><span>Useful detail for review and action</span></div></div>
           <div class="three-col">
             <div class="summary-item"><div><b>Area</b><small><%= listing.location?.area || '-' %></small></div></div>
             <div class="summary-item"><div><b>City</b><small><%= listing.location?.city || '-' %></small></div></div>
             <div class="summary-item"><div><b>Country</b><small><%= listing.location?.country || '-' %></small></div></div>
-            <div class="summary-item"><div><b>Address</b><small><%= listing.location?.address || '-' %></small></div></div>
+            <div class="summary-item"><div><b>Address</b><small><%= listing.location?.addressLine || '-' %></small></div></div>
             <div class="summary-item"><div><b>Purpose</b><small><%= listing.purpose || '-' %></small></div></div>
             <div class="summary-item"><div><b>Visibility</b><small><%= listing.visibility || '-' %></small></div></div>
+          </div>
+          <div class="three-col" style="margin-top:14px;">
+            <div class="summary-item"><div><b>Security rating</b><small><%= securityLabelMap[intel.securityRating || 'unknown'] %></small></div></div>
+            <div class="summary-item"><div><b>Traffic indicator</b><small><%= trafficLabelMap[intel.trafficIndicator || 'unknown'] %></small></div></div>
+            <div class="summary-item"><div><b>Survey fee</b><small><%= intel.surveyFeePaid ? 'Paid — map allowed' : 'Not paid — map hidden' %></small></div></div>
+            <div class="summary-item"><div><b>Available from</b><small><%= intel.availableFrom ? new Date(intel.availableFrom).toLocaleString() : '-' %></small></div></div>
+            <div class="summary-item"><div><b>Expected vacate</b><small><%= intel.expectedVacateAt ? new Date(intel.expectedVacateAt).toLocaleString() : '-' %></small></div></div>
+            <div class="summary-item"><div><b>Room video</b><small><%= roomVideo ? 'Uploaded' : 'Not uploaded' %></small></div></div>
+          </div>
+          <% if (roomVideo) { %>
+            <div class="page-banner" style="margin-top:14px;">
+              <h3>Room appearance video</h3>
+              <video src="<%= roomVideo.url %>" controls playsinline style="width:100%;border-radius:18px;border:1px solid var(--line);margin-top:12px;background:#000"></video>
+            </div>
+          <% } %>
+          <div class="page-banner" style="margin-top:14px;">
+            <h3>Apartment map access</h3>
+            <% if (hasPaidSurveyMap) { %>
+              <iframe style="width:100%;height:260px;border:0;border-radius:18px;margin-top:12px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=<%= encodeURIComponent(`${listing.location.latitude},${listing.location.longitude}`) %>&output=embed"></iframe>
+            <% } else { %>
+              <p>Exact location stays hidden until the survey fee is paid and valid coordinates are saved.</p>
+            <% } %>
           </div>
         </div>
       </div>

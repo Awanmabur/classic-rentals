@@ -1,3 +1,5 @@
+<% const safeCurrentUser = typeof currentUser !== 'undefined' ? currentUser : (typeof locals !== 'undefined' && locals.currentUser ? locals.currentUser : null); %>
+<% const safeCurrentPath = typeof currentPath !== 'undefined' ? currentPath : (typeof locals !== 'undefined' && locals.currentPath ? locals.currentPath : ''); %>
 <header class="siteHeader">
   <div class="topbar">
     <div class="wrap topbarRow">
@@ -26,7 +28,7 @@
       <nav class="navLinks desktopNav">
         <a href="/">Home</a>
         <a href="/listings">Browse</a>
-        <% if (currentUser) { %>
+        <% if (safeCurrentUser) { %>
           <a href="/listings/manage">Manage listings</a>
           <a href="/dashboard">Dashboard</a>
         <% } %>
@@ -34,7 +36,7 @@
 
       <div class="navActions">
         <button id="themeToggle" class="iconBtn" type="button" aria-label="Toggle theme">◐</button>
-        <% if (currentUser) { %>
+        <% if (safeCurrentUser) { %>
           <a class="btn alt desktopOnly" href="/listings/create">Post listing</a>
           <button class="btn" id="logoutBtn" type="button">Logout</button>
         <% } else { %>
@@ -50,7 +52,7 @@
     <div class="wrap mobileMenuInner">
       <a href="/">Home</a>
       <a href="/listings">Browse listings</a>
-      <% if (currentUser) { %>
+      <% if (safeCurrentUser) { %>
         <a href="/listings/create">Post listing</a>
         <a href="/listings/manage">Manage listings</a>
         <a href="/dashboard">Dashboard</a>

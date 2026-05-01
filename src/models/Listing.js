@@ -9,6 +9,14 @@ const imageSchema = new mongoose.Schema({
   isPrimary: { type: Boolean, default: false },
 }, { _id: false });
 
+const videoSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  publicId: { type: String, required: true },
+  duration: Number,
+  width: Number,
+  height: Number,
+}, { _id: false });
+
 const pointSchema = new mongoose.Schema({
   type: {
     type: String,
@@ -81,6 +89,29 @@ const listingSchema = new mongoose.Schema({
   },
   amenities: [{ type: String, trim: true }],
   images: { type: [imageSchema], default: [] },
+  videos: { type: [videoSchema], default: [] },
+  apartmentIntel: {
+    surveyFeePaid: { type: Boolean, default: false },
+    securityRating: { type: String, enum: ['unknown', 'low', 'moderate', 'good', 'excellent'], default: 'unknown' },
+    trafficIndicator: { type: String, enum: ['unknown', 'light', 'moderate', 'heavy'], default: 'unknown' },
+    availableFrom: Date,
+    expectedVacateAt: Date,
+  },
+  monetization: {
+    tier: { type: String, enum: ['free', 'standard', 'premium'], default: 'free' },
+    featuredRequested: { type: Boolean, default: false },
+    verificationRequested: { type: Boolean, default: false },
+    verificationPaid: { type: Boolean, default: false },
+    viewingFeeEnabled: { type: Boolean, default: false },
+    viewingFeeAmount: { type: Number, min: 0, default: 0 },
+    viewingFeeCurrency: { type: String, default: 'USD' },
+    reservationFeeEnabled: { type: Boolean, default: false },
+    reservationFeeAmount: { type: Number, min: 0, default: 0 },
+    reservationFeeCurrency: { type: String, default: 'USD' },
+    leadAccess: { type: String, enum: ['open', 'paid'], default: 'open' },
+    planSnapshot: { type: String, default: 'free' },
+    lastMonetizedAt: Date,
+  },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   assignedAgent: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
   moderation: {

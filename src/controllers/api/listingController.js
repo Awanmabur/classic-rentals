@@ -71,6 +71,32 @@ function parseAmenities(value) {
   return String(value || '').split(',').map((v) => v.trim()).filter(Boolean);
 }
 
+function applyUploadedMedia(listing, uploads = []) {
+  const imageUploads = uploads.filter((item) => item.resource_type !== 'video');
+  const videoUploads = uploads.filter((item) => item.resource_type === 'video');
+
+  if (imageUploads.length) {
+    listing.images.push(...imageUploads.map((item, index) => ({
+      url: item.secure_url,
+      publicId: item.public_id,
+      width: item.width,
+      height: item.height,
+      isPrimary: !listing.images?.length && index === 0,
+    })));
+    if (!listing.images.some((i) => i.isPrimary) && listing.images[0]) listing.images[0].isPrimary = true;
+  }
+
+  if (videoUploads.length) {
+    listing.videos.push(...videoUploads.map((item) => ({
+      url: item.secure_url,
+      publicId: item.public_id,
+      duration: item.duration,
+      width: item.width,
+      height: item.height,
+    })));
+  }
+}
+
 exports.createListing = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
 
@@ -106,6 +132,13 @@ exports.createListing = asyncHandler(async (req, res) => {
       furnished: req.body.furnished === 'true',
     },
     amenities: parseAmenities(req.body.amenities),
+    apartmentIntel: {
+      surveyFeePaid: req.body.surveyFeePaid === 'true' || req.body.surveyFeePaid === 'on',
+      securityRating: req.body.securityRating || 'unknown',
+      trafficIndicator: req.body.trafficIndicator || 'unknown',
+      availableFrom: req.body.availableFrom ? new Date(req.body.availableFrom) : undefined,
+      expectedVacateAt: req.body.expectedVacateAt ? new Date(req.body.expectedVacateAt) : undefined,
+    },
     owner: ownerId,
     assignedAgent: req.user.role === 'agent' ? ownerId : (req.body.assignedAgent || undefined),
     status: 'published',
@@ -118,13 +151,7 @@ exports.createListing = asyncHandler(async (req, res) => {
 
   if (req.files?.length) {
     const uploads = await uploadManyToCloudinary(req.files, `jubarentals/listings/${listing._id}`);
-    listing.images = uploads.map((item, index) => ({
-      url: item.secure_url,
-      publicId: item.public_id,
-      width: item.width,
-      height: item.height,
-      isPrimary: index === 0,
-    }));
+    applyUploadedMedia(listing, uploads);
     await listing.save();
   }
 
@@ -252,6 +279,12 @@ exports.updateListing = asyncHandler(async (req, res) => {
   if (typeof req.body.furnished !== 'undefined') listing.specs.furnished = req.body.furnished === 'true';
 
   if (typeof req.body.amenities !== 'undefined') listing.amenities = parseAmenities(req.body.amenities);
+  if (!listing.apartmentIntel) listing.apartmentIntel = {};
+  if (typeof req.body.surveyFeePaid !== 'undefined') listing.apartmentIntel.surveyFeePaid = req.body.surveyFeePaid === 'true' || req.body.surveyFeePaid === 'on';
+  if (typeof req.body.securityRating !== 'undefined') listing.apartmentIntel.securityRating = req.body.securityRating || 'unknown';
+  if (typeof req.body.trafficIndicator !== 'undefined') listing.apartmentIntel.trafficIndicator = req.body.trafficIndicator || 'unknown';
+  if (typeof req.body.availableFrom !== 'undefined') listing.apartmentIntel.availableFrom = req.body.availableFrom ? new Date(req.body.availableFrom) : undefined;
+  if (typeof req.body.expectedVacateAt !== 'undefined') listing.apartmentIntel.expectedVacateAt = req.body.expectedVacateAt ? new Date(req.body.expectedVacateAt) : undefined;
 
   if (['admin', 'super-admin'].includes(req.user.role)) {
     if (typeof req.body.featured !== 'undefined') listing.featured = req.body.featured === 'true';
@@ -263,15 +296,7 @@ exports.updateListing = asyncHandler(async (req, res) => {
 
   if (req.files?.length) {
     const uploads = await uploadManyToCloudinary(req.files, `jubarentals/listings/${listing._id}`);
-    const newImages = uploads.map((item) => ({
-      url: item.secure_url,
-      publicId: item.public_id,
-      width: item.width,
-      height: item.height,
-      isPrimary: false,
-    }));
-    listing.images.push(...newImages);
-    if (!listing.images.some((i) => i.isPrimary) && listing.images[0]) listing.images[0].isPrimary = true;
+    applyUploadedMedia(listing, uploads);
   }
 
   await listing.save();
@@ -294,7 +319,10 @@ exports.deleteListing = asyncHandler(async (req, res) => {
   const canDelete = ['admin', 'super-admin'].includes(req.user.role) || String(listing.owner) === String(req.user._id);
   if (!canDelete) throw new ApiError(403, 'You are not allowed to delete this listing');
 
-  const publicIds = listing.images.map((img) => img.publicId).filter(Boolean);
+  const publicIds = [
+    ...listing.images.map((img) => img.publicId),
+    ...(listing.videos || []).map((video) => video.publicId),
+  ].filter(Boolean);
   if (publicIds.length) await deleteManyFromCloudinary(publicIds);
 
   await Promise.all([

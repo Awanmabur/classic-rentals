@@ -1,10 +1,26 @@
-<article class="card listingCard" data-listing-id="<%= listing._id %>">
+<%
+  const primaryImage = (listing.images && (listing.images.find(i => i.isPrimary) || listing.images[0]))
+    ? ((listing.images.find(i => i.isPrimary) || listing.images[0]).url)
+    : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop';
+  const intel = listing.apartmentIntel || {};
+  const hasVideo = Array.isArray(listing.videos) && listing.videos.length > 0;
+  const hasMapAccess = Boolean(intel.surveyFeePaid && listing.location?.latitude && listing.location?.longitude);
+  const vacateAt = intel.expectedVacateAt ? new Date(intel.expectedVacateAt) : null;
+  const hasFutureVacate = vacateAt && !Number.isNaN(vacateAt.getTime()) && vacateAt.getTime() > Date.now();
+  const trafficLabelMap = { unknown: 'Traffic not set', light: 'Light traffic', moderate: 'Moderate traffic', heavy: 'Heavy traffic' };
+  const securityLabelMap = { unknown: 'Security unrated', low: 'Low security', moderate: 'Moderate security', good: 'Good security', excellent: 'Excellent security' };
+  const monet = listing.monetization || {};
+%>
+<article class="card listingCard listingCard--uniform" data-listing-id="<%= listing._id %>">
+  <a class="listingCardLink" href="/listings/<%= listing.slug %>" aria-label="Open <%= listing.title %>"></a>
   <div class="thumb">
-    <img src="<%= (listing.images && (listing.images.find(i => i.isPrimary) || listing.images[0])) ? ((listing.images.find(i => i.isPrimary) || listing.images[0]).url) : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop' %>" alt="<%= listing.title %>">
+    <img src="<%= primaryImage %>" alt="<%= listing.title %>">
     <div class="badgeRow">
-      <% if (listing.verified) { %><span class="b ok">Verified</span><% } %>
-      <% if (listing.featured) { %><span class="b feat">Featured</span><% } %>
-      <% if (listing.createdAt && (Date.now() - new Date(listing.createdAt).getTime()) < 1000*60*60*24*7) { %><span class="b new">New</span><% } %>
+      <% if (listing.featured) { %><span class="b feat">FEATURED</span><% } %>
+      <% if (listing.verified) { %><span class="b ok">VERIFIED</span><% } %>
+      <% if (listing.createdAt && (Date.now() - new Date(listing.createdAt).getTime()) < 1000*60*60*24*7) { %><span class="b new">NEW</span><% } %>
+      <% if (hasVideo) { %><span class="b">VIDEO</span><% } %>
+      <% if (monet.tier && monet.tier !== 'free') { %><span class="b"><%= monet.tier.toUpperCase() %></span><% } %>
     </div>
   </div>
   <div class="cardBody">
@@ -12,21 +28,34 @@
       <h3><%= listing.title %></h3>
       <button class="fav <%= (favoriteIds || []).includes(String(listing._id)) ? 'active' : '' %>" type="button" data-favorite-id="<%= listing._id %>" aria-label="Toggle favorite">♥</button>
     </div>
-    <div class="meta">
-      <span><%= listing.category %></span>
-      <span><%= listing.location?.area %></span>
-      <% if (listing.specs?.bedrooms) { %><span><%= listing.specs.bedrooms %> bed</span><% } %>
-      <% if (listing.specs?.bathrooms) { %><span><%= listing.specs.bathrooms %> bath</span><% } %>
+    <div class="meta homeLikeMeta">
+      <span><%= listing.location?.area || listing.location?.city || 'Juba' %></span>
+      <span><%= listing.verified ? 'Verified' : 'Standard' %></span>
+      <% if (listing.category) { %><span><%= listing.category %></span><% } %>
     </div>
+    <div class="meta homeLikeMeta" style="margin-top:8px;">
+      <span><%= securityLabelMap[intel.securityRating] || 'Security unrated' %></span>
+      <span><%= trafficLabelMap[intel.trafficIndicator] || 'Traffic not set' %></span>
+      <span><%= hasMapAccess ? 'Map unlocked' : 'Map locked' %></span>
+    </div>
+    <% if (hasFutureVacate) { %>
+      <div class="meta homeLikeMeta" style="margin-top:8px;">
+        <span>Vacates <%= vacateAt.toLocaleDateString() %></span>
+        <span><%= Math.max(1, Math.ceil((vacateAt.getTime() - Date.now()) / 86400000)) %> day<%= Math.ceil((vacateAt.getTime() - Date.now()) / 86400000) === 1 ? '' : 's' %> left</span>
+      </div>
+    <% } %>
+    <% if (monet.viewingFeeEnabled || monet.reservationFeeEnabled) { %>
+      <div class="meta homeLikeMeta" style="margin-top:8px;">
+        <% if (monet.viewingFeeEnabled) { %><span>Viewing fee: <%= monet.viewingFeeCurrency || listing.price?.currency || 'USD' %> <%= Number(monet.viewingFeeAmount || 0).toLocaleString() %></span><% } %>
+        <% if (monet.reservationFeeEnabled) { %><span>Reservation fee: <%= monet.reservationFeeCurrency || listing.price?.currency || 'USD' %> <%= Number(monet.reservationFeeAmount || 0).toLocaleString() %></span><% } %>
+      </div>
+    <% } %>
     <div class="priceRow">
       <div>
-        <div class="price"><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %></div>
-        <div class="per"><%= listing.price?.unit === 'one-time' ? 'One time' : '/' + (listing.price?.unit || 'month') %></div>
+        <div class="price"><%= listing.price?.currency || 'USD' %> <%= Number(listing.price?.amount || 0).toLocaleString() %> <span class="per"><%= listing.price?.unit === 'one-time' ? 'One time' : '/' + (listing.price?.unit || 'month') %></span></div>
+        <div class="per"><%= listing.type || listing.category || 'Listing' %></div>
       </div>
-      <div class="row actionRow">
-        <button class="tinyBtn" type="button" data-open-listing="<%= listing._id %>">Quick view</button>
-        <a class="tinyBtn primaryGhost" href="/listings/<%= listing.slug %>">Open</a>
-      </div>
+      <a class="tinyBtn" href="/listings/<%= listing.slug %>">View</a>
     </div>
   </div>
 </article>

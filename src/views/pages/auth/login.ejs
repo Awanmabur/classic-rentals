@@ -1,25 +1,64 @@
 <%- include('../../partials/head', { title }) %>
-<%- include('../../partials/nav') %>
-<%- include('../../partials/toast') %>
-<section class="authWrap">
-  <form class="panel authCard" id="loginForm" action="/auth/login" method="post">
-    <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-    <h1 style="margin-top:0">Welcome back</h1>
-    <p style="color:var(--muted)">Login to access your dashboard and saved listings.</p>
-    <% if (verified) { %><div class="panel" style="border-color:#184d47;background:#0d1f1f;margin-bottom:12px">Your email has been verified successfully.</div><% } %>
-    <div style="display:grid;gap:12px">
-      <label>Email
-        <input class="input" type="email" name="email" value="<%= old?.email || '' %>" placeholder="Email address" required />
-        <% if (formErrors?.email) { %><small style="color:#fca5a5"><%= formErrors.email %></small><% } %>
-      </label>
-      <label>Password
-        <input class="input" type="password" name="password" placeholder="Password" required />
-        <% if (formErrors?.password) { %><small style="color:#fca5a5"><%= formErrors.password %></small><% } %>
-      </label>
-      <button class="btn" type="submit">Login</button>
-      <a class="tinyBtn" href="/auth/forgot-password">Forgot password?</a>
-      <a class="tinyBtn" href="/auth/register">Create account</a>
+<section class="authStandalone authStandalone--simple">
+  <div class="authStandalone__shell">
+    <div class="authBrandPanel panel">
+      <a class="authBrandMark" href="/">CR</a>
+      <span class="authEyebrow">Classic Rentals workspace</span>
+      <h1>Welcome back</h1>
+      <p>Sign in to manage listings, track inquiries, and continue your work from one clean dashboard.</p>
+      <div class="authBrandPoints">
+        <span>Dashboard access</span>
+        <span>Listing tools</span>
+        <span>Saved workflow</span>
+      </div>
     </div>
-  </form>
+    <form class="panel authCard authCard--modern" id="loginForm" action="/auth/login" method="post">
+      <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+      <div class="authCardHead">
+        <span class="authMiniBadge">Sign in</span>
+        <h2>Login to your account</h2>
+        <p>Use your email and password to continue.</p>
+      </div>
+      <% if (verified) { %><div class="authNotice authNotice--success">Your email has been verified successfully.</div><% } %>
+      <div class="authFormGrid authFormGrid--single">
+        <label class="fieldBlock">Email address
+          <input class="input" type="email" name="email" value="<%= old?.email || '' %>" placeholder="Email address" required />
+          <% if (formErrors?.email) { %><small class="fieldError"><%= formErrors.email %></small><% } %>
+        </label>
+        <label class="fieldBlock">Password
+          <div class="passwordField">
+            <input class="input" id="loginPassword" type="password" name="password" placeholder="Password" required />
+            <button class="passwordToggle" type="button" data-password-toggle="loginPassword" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            </button>
+          </div>
+          <% if (formErrors?.password) { %><small class="fieldError"><%= formErrors.password %></small><% } %>
+        </label>
+      </div>
+      <div class="authActions authActions--stack">
+        <button class="btn" type="submit">Login</button>
+        <a class="tinyBtn" href="/auth/forgot-password">Forgot password?</a>
+      </div>
+      <div class="authAltLine">
+        <span>New here?</span>
+        <a href="/auth/register">Create account</a>
+      </div>
+    </form>
+  </div>
 </section>
-<%- include('../../partials/footer') %>
+<script>
+  document.querySelectorAll('[data-password-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.passwordToggle);
+      if (!input) return;
+      const visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      btn.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+      btn.innerHTML = visible
+        ? '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.1A11.5 11.5 0 0 1 12 5c6.5 0 10 7 10 7a18.8 18.8 0 0 1-3.3 3.9M6.6 6.7C4 8.3 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.4 4.6-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    });
+  });
+</script>
+</body>
+</html>

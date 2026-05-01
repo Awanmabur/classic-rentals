@@ -1,5 +1,5 @@
 <%- include('../../partials/head', { title }) %>
-<%- include('../../partials/nav') %>
+<%- include('../../partials/nav', { currentUser: null, currentPath: '' }) %>
 <section class="authWrap">
   <div class="panel authCard">
     <h1>Error <%= status %></h1>

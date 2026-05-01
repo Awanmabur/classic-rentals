@@ -1,4 +1,11 @@
 <%- include('../../partials/head', { title }) %>
+<%
+  const draft = old || {};
+  const val = (key, fallback = '') => (draft && draft[key] !== undefined && draft[key] !== null && draft[key] !== '' ? draft[key] : fallback);
+  const monet = monetization || {};
+  const ent = monet.entitlements || {};
+  const rem = monet.remaining || {};
+%>
 <div class="app" id="appShell">
   <%- include('../../partials/dashboard-sidebar') %>
   <main class="main">
@@ -26,7 +33,12 @@
         </div>
       </div>
 
-      <form class="tableCard dashboardFormCard listingWizardForm" action="/listings/create" method="post" enctype="multipart/form-data" id="listingWizardForm" data-autosave-key="juba-create-listing-draft">
+      <section class="page-banner" style="margin:0 0 16px">
+        <h3>Current plan: <%= ent.planName || 'Free' %></h3>
+        <p class="muted">Listings left: <strong><%= rem.listings === Infinity ? 'Unlimited' : rem.listings %></strong> • Featured slots left: <strong><%= rem.featured === Infinity ? 'Unlimited' : rem.featured %></strong>. Upgrade or manage monetization in <a href="/dashboard/billing">Billing</a>.</p>
+      </section>
+
+      <form class="tableCard dashboardFormCard listingWizardForm" action="/listings/create?<%= csrfToken ? `_csrf=${encodeURIComponent(csrfToken)}` : "" %>" method="post" enctype="multipart/form-data" id="listingWizardForm" data-autosave-key="juba-create-listing-draft">
         <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
 
         <section class="wizardPanel active" data-step="0">
@@ -103,6 +115,12 @@
               <input class="input" name="longitude" value="<%= old?.longitude || '' %>">
               <% if (formErrors?.longitude) { %><small style="color:#dc2626"><%= formErrors.longitude %></small><% } %>
             </label>
+            <label>Survey fee / map access
+              <select class="input" name="surveyFeePaid">
+                <option value="false" <%= old?.surveyFeePaid === 'true' ? '' : 'selected' %>>No - keep exact map hidden</option>
+                <option value="true" <%= old?.surveyFeePaid === 'true' ? 'selected' : '' %>>Yes - unlock exact map location</option>
+              </select>
+            </label>
           </div>
         </section>
 
@@ -137,6 +155,26 @@
             <label>Amenities
               <input class="input" name="amenities" value="<%= old?.amenities || '' %>" placeholder="Parking, Wi-Fi, security, garden...">
             </label>
+            <label>Security rating
+              <select class="input" name="securityRating">
+                <% [['unknown','Unknown'],['low','Low'],['moderate','Moderate'],['good','Good'],['excellent','Excellent']].forEach(([value,label])=>{ %>
+                  <option value="<%= value %>" <%= old?.securityRating===value?'selected':'' %>><%= label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Traffic indicator
+              <select class="input" name="trafficIndicator">
+                <% [['unknown','Unknown'],['light','Light'],['moderate','Moderate'],['heavy','Heavy']].forEach(([value,label])=>{ %>
+                  <option value="<%= value %>" <%= old?.trafficIndicator===value?'selected':'' %>><%= label %></option>
+                <% }) %>
+              </select>
+            </label>
+            <label>Available from
+              <input class="input" type="datetime-local" name="availableFrom" value="<%= old?.availableFrom || '' %>">
+            </label>
+            <label>Expected tenant leaving date
+              <input class="input" type="datetime-local" name="expectedVacateAt" value="<%= old?.expectedVacateAt || '' %>">
+            </label>
           </div>
         </section>
 
@@ -150,9 +188,45 @@
           </div>
 
           <div class="formGrid autoFit">
-            <label class="listingWizardWide">Images
-              <input class="input" type="file" name="images" accept="image/*" multiple>
+            <label class="listingWizardWide">Images and room video
+              <input class="input" type="file" name="images" accept="image/*,video/*" multiple>
+              <small class="muted">Upload photos plus a room appearance video so visitors can inspect the space before booking.</small>
             </label>
+            <div class="listingWizardWide page-banner" style="margin:0">
+              <h3 style="margin:0 0 8px">Monetization tools</h3>
+              <div class="formGrid autoFit">
+                <label>Listing tier
+                  <select class="input" name="tier">
+                    <option value="free" <%= val('tier', 'free')==='free' ? 'selected' : '' %>>Free listing</option>
+                    <option value="standard" <%= val('tier', 'free')==='standard' ? 'selected' : '' %>>Standard paid listing</option>
+                    <option value="premium" <%= val('tier', 'free')==='premium' ? 'selected' : '' %>>Premium listing</option>
+                  </select>
+                </label>
+                <label>Lead access
+                  <select class="input" name="leadAccess">
+                    <option value="open" <%= val('leadAccess', 'open')==='open' ? 'selected' : '' %>>Open inquiries</option>
+                    <option value="paid" <%= val('leadAccess', 'open')==='paid' ? 'selected' : '' %>>Paid / qualified leads</option>
+                  </select>
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="useFeaturedSlot" value="true" <%= val('useFeaturedSlot', '') ? 'checked' : '' %> <%= '' %>> Use featured slot</label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="verificationRequested" value="true" <%= val('verificationRequested', '') ? 'checked' : '' %>> Request paid verification badge</label>
+                <label>Viewing fee amount
+                  <input class="input" type="number" min="0" step="0.01" name="viewingFeeAmount" value="<%= val('viewingFeeAmount', '') %>">
+                </label>
+                <label>Viewing fee currency
+                  <input class="input" name="viewingFeeCurrency" value="<%= val('viewingFeeCurrency', old?.currency || 'USD') %>">
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="viewingFeeEnabled" value="true" <%= val('viewingFeeEnabled', '') ? 'checked' : '' %>> Charge viewing fee</label>
+                <label>Reservation fee amount
+                  <input class="input" type="number" min="0" step="0.01" name="reservationFeeAmount" value="<%= val('reservationFeeAmount', '') %>">
+                </label>
+                <label>Reservation fee currency
+                  <input class="input" name="reservationFeeCurrency" value="<%= val('reservationFeeCurrency', old?.currency || 'USD') %>">
+                </label>
+                <label class="checkLine" style="align-self:end"><input type="checkbox" name="reservationFeeEnabled" value="true" <%= val('reservationFeeEnabled', '') ? 'checked' : '' %>> Charge reservation fee</label>
+              </div>
+              <small class="muted">Use plans, boosts, verification, and booking fees together. Featured placement only applies when your billing plan has a free featured slot available.</small>
+            </div>
             <label class="listingWizardWide">Description
               <textarea class="input" name="description" rows="7" required><%= old?.description || '' %></textarea>
               <% if (formErrors?.description) { %><small style="color:#dc2626"><%= formErrors.description %></small><% } %>
@@ -162,7 +236,7 @@
           <div class="listingWizardReview">
             <div class="mini-stat"><small>Checklist</small><strong>Ready to publish</strong></div>
             <div class="mini-stat"><small>Draft saving</small><strong>Enabled</strong></div>
-            <div class="mini-stat"><small>Route</small><strong>/listings/create</strong></div>
+            <div class="mini-stat"><small>Route</small><div style="margin-top:6px"><a class="dashGhostBtn" href="/listings/create" style="display:inline-flex;max-width:100%;white-space:normal;word-break:break-all;line-height:1.35;padding:6px 10px;font-size:.68rem">/listings/create</a></div></div>
           </div>
         </section>
 

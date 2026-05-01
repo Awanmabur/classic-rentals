@@ -8,10 +8,10 @@
   --text: #111827;
   --muted: #6b7280;
   --line: #e5e7eb;
-  --success: #16a34a;
+  --success: #b36800;
   --warning: #d97706;
   --danger: #dc2626;
-  --info: #2563eb;
+  --info: #6b7280;
   --shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
   --shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.04);
   --radius-xl: 22px;
@@ -33,7 +33,7 @@ body.dark-mode {
 }
 * { box-sizing: border-box; }
 html, body { width:100%; max-width:100%; overflow-x:hidden; }
-body { margin:0; font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); font-size:13px; transition: background .25s ease, color .25s ease; }
+body { margin:0; font-family:'Poppins',sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; transition: background .25s ease, color .25s ease; }
 a { color: inherit; text-decoration:none; }
 img { display:block; max-width:100%; }
 button,input,select,textarea { font:inherit; }
@@ -51,7 +51,7 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .app.sidebar-collapsed .main { margin-left:var(--sidebar-mini); width:calc(100% - var(--sidebar-mini)); }
 .sidebar-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .brand { flex:1; min-width:0; display:flex; align-items:center; gap:9px; padding:0; background:transparent; border-radius:0; border:0; box-shadow:none; }
-.brand-logo { width:40px; height:40px; border-radius:14px; display:grid; place-items:center; background:var(--primary); color:#fff; font-weight:800; box-shadow:var(--shadow-soft); flex-shrink:0; }
+.brand-logo { width:40px; height:40px; border-radius:14px; display:grid; place-items:center; background:transparent; color:var(--primary); font-weight:800; box-shadow:none; flex-shrink:0; border:0; }
 .brand h1 { font-size:.88rem; line-height:1.1; white-space:nowrap; margin:0; }
 .brand p { margin:2px 0 0; color:var(--muted); font-size:.68rem; white-space:nowrap; }
 .collapse-btn,.menu-btn,.icon-btn,.theme-btn,.view-btn { width:34px; height:34px; border-radius:var(--radius-pill); border:1px solid var(--line); background:var(--panel); color:var(--text); display:grid; place-items:center; cursor:pointer; box-shadow:var(--shadow-soft); transition:.2s ease; flex-shrink:0; }
@@ -62,7 +62,7 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .nav-link:hover { background: rgba(17,24,39,.04); }
 .nav-link.active { background: rgba(205,119,0,.12); color:var(--primary); font-weight:700; }
 .nav-icon { width:30px; height:30px; border-radius:var(--radius-pill); background:var(--panel); border:1px solid var(--line); display:grid; place-items:center; box-shadow:var(--shadow-soft); flex-shrink:0; font-size:12px; }
-.nav-label { font-size:.8rem; white-space:nowrap; }
+.nav-label { font-size:.86rem; white-space:nowrap; }
 .sidebar-card { margin-top:auto; background:#111827; color:#fff; padding:14px; border-radius:18px; box-shadow:var(--shadow); }
 .chip { display:inline-flex; align-items:center; gap:7px; padding:5px 9px; border-radius:var(--radius-pill); background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.08); font-size:.64rem; margin-bottom:9px; }
 .sidebar-card h3 { font-size:.88rem; margin:0 0 5px; }
@@ -74,11 +74,11 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .topbar { display:grid; grid-template-columns:auto minmax(140px,1fr) auto; align-items:center; gap:12px; min-width:0; }
 .topbar-left { display:flex; align-items:center; gap:10px; min-width:0; }
 .page-title h2 { font-size:1.22rem; line-height:1.1; margin:0 0 3px; }
-.page-title p,.muted,.emptyState,.page-banner p { color:var(--muted); font-size:.76rem; }
+.page-title p,.muted,.emptyState,.page-banner p { color:var(--muted); font-size:.82rem; }
 .menu-btn { display:none; margin-left:auto; }
 .topbar-center { display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
 .search { position:relative; min-width:140px; max-width:260px; width:100%; }
-.search input,.filter-row select,.filter-row input,.filter-row textarea,.form-grid input,.form-grid select,.form-grid textarea,.input,select.input,textarea.input,.field input,.field select,.field textarea,.field-inline input,.field-inline select,.field-inline textarea { width:100%; outline:none; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:16px; padding:10px 12px; font-size:.74rem; box-shadow:var(--shadow-soft); transition:.2s ease; }
+.search input,.filter-row select,.filter-row input,.filter-row textarea,.form-grid input,.form-grid select,.form-grid textarea,.input,select.input,textarea.input,.field input,.field select,.field textarea,.field-inline input,.field-inline select,.field-inline textarea { width:100%; outline:none; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:16px; padding:11px 13px; font-size:.8rem; box-shadow:var(--shadow-soft); transition:.2s ease; }
 .search input { padding-left:30px; min-height:32px; border-radius:var(--radius-pill); padding-top:7px; padding-bottom:7px; }
 .search input:focus,.filter-row select:focus,.filter-row input:focus,.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus,.input:focus,.field input:focus,.field select:focus,.field textarea:focus,.field-inline input:focus,.field-inline select:focus,.field-inline textarea:focus { border-color: rgba(205,119,0,.32); box-shadow:0 0 0 4px rgba(205,119,0,.08); }
 .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:#9ca3af; font-size:12px; pointer-events:none; }
@@ -117,7 +117,7 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .stat-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .stat-icon { width:36px; height:36px; border-radius:var(--radius-pill); display:grid; place-items:center; background:var(--primary-soft); color:var(--primary); font-size:13px; }
 .trend { padding:4px 7px; font-weight:700; }
-.up { color:var(--success); background:rgba(22,163,74,.09); }
+.up { color:var(--success); background:rgba(179, 104, 0,.09); }
 .down { color:var(--danger); background:rgba(220,38,38,.08); }
 .stat-card h5 { font-size:1rem; line-height:1.2; margin:8px 0 2px; }
 .filter-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; margin-bottom:18px; }
@@ -133,9 +133,9 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .property-side strong { display:block; font-size:.82rem; margin-bottom:6px; }
 .status { display:inline-flex; align-items:center; gap:5px; padding:5px 9px; font-weight:700; }
 .status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
-.status.occupied,.status.active,.status.published,.status.resolved { color:var(--success); background:rgba(22,163,74,.09); }
-.status.pending,.status.reviewing,.status.trialing { color:var(--warning); background:rgba(217,119,6,.09); }
-.status.vacant,.status.draft,.status.archived,.status.cancelled,.status.rejected { color:var(--info); background:rgba(37,99,235,.09); }
+.status.occupied,.status.active,.status.published,.status.resolved { color:var(--success); background:rgba(179, 104, 0,.09); }
+.status.pending,.status.reviewing,.status.trialing { color:var(--warning); background:rgba(154, 107, 0,.09); }
+.status.vacant,.status.draft,.status.archived,.status.cancelled,.status.rejected { color:var(--info); background:rgba(107,114,128,.10); }
 .progress-body { display:grid; gap:10px; }
 .progress-row { display:grid; gap:6px; }
 .progress-label { display:flex; justify-content:space-between; gap:8px; font-size:.74rem; }
@@ -150,7 +150,7 @@ body.dark-mode .sidebar::-webkit-scrollbar-thumb{background:rgba(30,41,59,.98);b
 .list-side small { color:var(--muted); font-size:.66rem; }
 .table-shell,.tableWrap { overflow:auto; border:1px solid var(--line); border-radius:18px; }
 table { width:100%; border-collapse:collapse; min-width:680px; }
-th,td { padding:12px 14px; text-align:left; font-size:.74rem; border-bottom:1px solid var(--line); vertical-align:top; }
+th,td { padding:13px 15px; text-align:left; font-size:.8rem; border-bottom:1px solid var(--line); vertical-align:top; }
 th { color:var(--muted); font-weight:700; background:var(--panel-soft); }
 td { background:var(--panel); }
 .page-banner h3,.profile-card h4 { margin:0 0 6px; }
@@ -167,7 +167,7 @@ td { background:var(--panel); }
 .app.sidebar-collapsed .nav-link { justify-content:center; padding:6px; overflow:visible; }
 @media (max-width:1180px){ .hero,.dashboard-grid,.two-col,.profile-grid,.form-grid,.cards-grid,.three-col,.stats-grid,.metric-strip { grid-template-columns:1fr 1fr; } .hero{grid-template-columns:1fr;} .dashboard-grid,.two-col,.profile-grid{grid-template-columns:1fr;} }
 @media (max-width:1024px){ .sidebar{ width:min(76vw,270px); transform:translate3d(-110%,0,0); box-shadow:none; background:var(--panel); backdrop-filter:none;} .sidebar.show{ transform:translate3d(0,0,0);} .main{ margin-left:0; width:100%; } .topbar{ grid-template-columns:1fr auto; align-items:start; } .topbar-left{ grid-column:1 / -1; justify-content:space-between; } .topbar-center{ grid-column:1 / 2; grid-row:2; justify-content:flex-start; } .search{ max-width:190px; min-width:0; } .topbar-right{ grid-column:2 / 3; grid-row:2; display:grid; grid-template-columns:auto auto auto auto; gap:6px; } .menu-btn{ display:grid; }}
-@media (max-width:768px){ .topbar-center,.topbar-right{ display:none; } body{ font-size:12.5px; } .main{ padding:12px; } .page-title h2{ font-size:1.14rem; } .hero-card,.card,.table-card,.panel-card{ padding:14px; } .hero h3{ font-size:1.18rem; } .hero,.dashboard-grid,.two-col,.profile-grid,.form-grid,.cards-grid,.three-col,.stats-grid,.metric-strip{ grid-template-columns:1fr; } .hero-stats,.stats-grid,.metric-strip,.cards-grid,.three-col{ grid-template-columns:repeat(2,minmax(0,1fr)); } .property-card{ grid-template-columns:1fr; } .property-side,.list-side{ text-align:left; } .list-row{ flex-direction:column; align-items:flex-start; } .table-shell table,.tableWrap table{ min-width:560px; } }
+@media (max-width:768px){ .topbar-center,.topbar-right{ display:none; } body{ font-size:13px; } .main{ padding:12px; } .page-title h2{ font-size:1.14rem; } .hero-card,.card,.table-card,.panel-card{ padding:14px; } .hero h3{ font-size:1.18rem; } .hero,.dashboard-grid,.two-col,.profile-grid,.form-grid,.cards-grid,.three-col,.stats-grid,.metric-strip{ grid-template-columns:1fr; } .hero-stats,.stats-grid,.metric-strip,.cards-grid,.three-col{ grid-template-columns:repeat(2,minmax(0,1fr)); } .property-card{ grid-template-columns:1fr; } .property-side,.list-side{ text-align:left; } .list-row{ flex-direction:column; align-items:flex-start; } .table-shell table,.tableWrap table{ min-width:560px; } }
 @media (max-width:560px){ .hero-stats,.stats-grid,.metric-strip,.cards-grid,.three-col{ grid-template-columns:repeat(2,minmax(0,1fr)); } .filter-row > *{ flex-basis:calc(50% - 10px); } .table-shell table,.tableWrap table{ min-width:520px; } }
 
 
@@ -200,13 +200,13 @@ td { background:var(--panel); }
 .listingWizardActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;}
 .listingWizardActions .menu-btn{display:none;margin-left:0;}
 .listingWizardProgressRow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(170px,.95fr);gap:6px;align-items:stretch;}
-.wizardStepChip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:3px 7px;display:flex;align-items:center;gap:5px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-soft);transition:.2s ease;font-size:.66rem;min-height:28px;line-height:1.05;}
+.wizardStepChip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:5px 9px;display:flex;align-items:center;gap:6px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-soft);transition:.2s ease;font-size:.72rem;min-height:32px;line-height:1.1;}
 .wizardStepChip span{width:15px;height:15px;border-radius:999px;display:grid;place-items:center;background:var(--panel-soft);border:1px solid var(--line);font-size:.54rem;flex:0 0 15px;}
 .wizardStepChip.active{background:var(--primary-soft);color:var(--primary);border-color:rgba(205,119,0,.22);}
 .wizardStepChip.active span{background:var(--primary);color:#fff;border-color:transparent;}
 .wizardStatusBox{border:1px dashed var(--line);background:var(--panel-soft);border-radius:12px;padding:7px 10px;display:grid;align-content:center;}
 .wizardStatusBox strong{font-size:.74rem;margin-bottom:2px;line-height:1.1;}
-.wizardStatusBox small{color:var(--muted);font-size:.62rem;line-height:1.3;}
+.wizardStatusBox small{color:var(--muted);font-size:.7rem;line-height:1.4;}
 .listingWizardForm{padding:18px;}
 .wizardPanel{display:none;gap:14px;}
 .wizardPanel.active{display:grid;}
@@ -556,4 +556,498 @@ canvas.simpleChart{display:block;width:100%;height:100%;}
 .settings-actions-row{grid-column:1 / -1;display:flex;justify-content:flex-end;align-items:center;}
 @media (max-width:768px){
   .settings-actions-row{justify-content:flex-start;}
+}
+
+
+/* Unified dashboard accent */
+.listingWizardShell .btn:not(.alt),
+.listingWizardShell .primary-btn,
+.listingWizardShell .wizardStepChip.active,
+.listingWizardShell .badgeSoft,
+.listingWizardShell .dashPrimaryBtn,
+section.card .dashPrimaryBtn[href="/listings/create"],
+.sectionHead .btn[href="/listings/create"] {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(205, 119, 0, 0.35);
+  box-shadow: 0 12px 24px rgba(205, 119, 0, 0.20);
+}
+.listingWizardShell .btn:not(.alt):hover,
+.listingWizardShell .primary-btn:hover,
+.listingWizardShell .dashPrimaryBtn:hover,
+section.card .dashPrimaryBtn[href="/listings/create"]:hover,
+.sectionHead .btn[href="/listings/create"]:hover {
+  box-shadow: 0 16px 28px rgba(205, 119, 0, 0.26);
+}
+.listingWizardShell .wizardStepChip.active span,
+.listingWizardShell .badgeSoft {
+  background: rgba(255,255,255,.18);
+  color: #fff;
+}
+body.dark-mode .listingWizardShell .btn:not(.alt),
+body.dark-mode .listingWizardShell .primary-btn,
+body.dark-mode .listingWizardShell .wizardStepChip.active,
+body.dark-mode .listingWizardShell .badgeSoft,
+body.dark-mode .listingWizardShell .dashPrimaryBtn,
+body.dark-mode section.card .dashPrimaryBtn[href="/listings/create"],
+body.dark-mode .sectionHead .btn[href="/listings/create"] {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(205, 119, 0, 0.34);
+  box-shadow: 0 14px 28px rgba(205, 119, 0, 0.24);
+}
+
+/* Keep older role dashboard pages aligned with the orange dashboard UI. */
+.dashboardShell.dashboardFuture,
+.dashboardShell.dashboardUnified {
+  --dash-sidebar: var(--panel);
+  --dash-sidebar-deep: var(--panel);
+  --dash-sidebar-line: var(--line);
+  --dash-surface: var(--bg);
+  --dash-panel: var(--panel);
+  --dash-panel-soft: var(--panel-soft);
+  --dash-border: var(--line);
+  --dash-text: var(--text);
+  --dash-muted: var(--muted);
+  --dash-accent: var(--primary);
+  --dash-accent-2: #a86100;
+  --dash-danger: var(--danger);
+  --brand: var(--primary);
+  --brand-2: #a86100;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.dashboardFuture .dashboardSidebar,
+.dashboardUnified .dashboardSidebar,
+.dashboardFuture .sidebar,
+.dashboardUnified .sidebar {
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  color: var(--text);
+  border-right: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.dashboardFuture .dashSidebarHead,
+.dashboardUnified .dashSidebarHead {
+  border-bottom-color: var(--line);
+}
+
+.dashboardFuture .brandMark,
+.dashboardUnified .brandMark,
+.dashboardFuture .dashSidebarFoot,
+.dashboardUnified .dashSidebarFoot {
+  color: var(--text);
+}
+
+.dashboardFuture .brandMarkIcon,
+.dashboardUnified .brandMarkIcon,
+.dashboardFuture .dashAvatar,
+.dashboardUnified .dashAvatar,
+.dashboardFuture .miniBars span,
+.dashboardUnified .miniBars span,
+.dashboardFuture .progressTrack span,
+.dashboardUnified .progressTrack span,
+.dashboardFuture .statusPill,
+.dashboardUnified .statusPill,
+.dashboardFuture .dashPrimaryBtn,
+.dashboardUnified .dashPrimaryBtn,
+.dashboardFuture .btn:not(.alt),
+.dashboardUnified .btn:not(.alt) {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(205, 119, 0, .24);
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboardFuture .dashboardNav a,
+.dashboardFuture .dashboardNav button,
+.dashboardUnified .dashboardNav a,
+.dashboardUnified .dashboardNav button,
+.dashboardUnified .sideNav a {
+  color: var(--text);
+  background: transparent;
+}
+
+.dashboardFuture .dashboardNav a:hover,
+.dashboardFuture .dashboardNav a.isActive,
+.dashboardUnified .dashboardNav a:hover,
+.dashboardUnified .dashboardNav a.isActive,
+.dashboardUnified .sideNav a:hover,
+.dashboardUnified .sideNav a.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: rgba(205, 119, 0, .18);
+}
+
+.dashboardFuture .navIcon,
+.dashboardUnified .navIcon {
+  background: var(--panel);
+  color: var(--primary);
+  border: 1px solid var(--line);
+}
+
+.dashboardFuture .dashboardPanel,
+.dashboardFuture .mainDash,
+.dashboardUnified .dashboardPanel,
+.dashboardUnified .mainDash,
+.dashboardFuture .metricCard,
+.dashboardFuture .contentCard,
+.dashboardUnified .metricCard,
+.dashboardUnified .contentCard,
+.dashboardUnified .dashCard,
+.dashboardUnified .miniCard,
+.dashboardUnified .tableCard {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--line);
+  box-shadow: var(--shadow);
+}
+
+.dashboardFuture .metricCard,
+.dashboardFuture .contentCard,
+.dashboardUnified .metricCard,
+.dashboardUnified .contentCard,
+.dashboardUnified .dashCard,
+.dashboardUnified .miniCard {
+  background: var(--panel-soft);
+}
+
+.dashboardFuture .metricValue span,
+.dashboardFuture .statBig,
+.dashboardFuture .statValue,
+.dashboardUnified .metricValue span,
+.dashboardUnified .statBig,
+.dashboardUnified .statValue,
+.dashboardFuture .summaryItem strong,
+.dashboardFuture .summaryItem span:first-child,
+.dashboardFuture .bulletList li span,
+.dashboardUnified .summaryItem strong,
+.dashboardUnified .summaryItem span:first-child,
+.dashboardUnified .bulletList li span {
+  color: var(--text);
+}
+
+.dashboardFuture .dashboardTitle p,
+.dashboardFuture .metricCard small,
+.dashboardFuture .metricDelta,
+.dashboardFuture .contentCard p,
+.dashboardFuture .progressMeta,
+.dashboardUnified .dashboardTitle p,
+.dashboardUnified .metricCard small,
+.dashboardUnified .metricDelta,
+.dashboardUnified .contentCard p,
+.dashboardUnified .progressMeta {
+  color: var(--muted);
+}
+
+.dashboardFuture .gauge,
+.dashboardUnified .gauge,
+.dashboardFuture .smallRing,
+.dashboardUnified .smallRing {
+  background: conic-gradient(var(--primary) 0 var(--gauge-angle, 220deg), #e5e7eb var(--gauge-angle, 220deg) 360deg);
+}
+
+.dashboardFuture .ring,
+.dashboardUnified .ring {
+  background: conic-gradient(var(--primary) 0 57%, #e5e7eb 57% 100%);
+}
+
+.dashboardFuture .ring::before,
+.dashboardFuture .smallRing::before,
+.dashboardFuture .gauge::before,
+.dashboardUnified .ring::before,
+.dashboardUnified .smallRing::before,
+.dashboardUnified .gauge::before {
+  background: var(--panel);
+}
+
+.dashboardFuture .climateCard,
+.dashboardFuture .communityCard,
+.dashboardUnified .climateCard,
+.dashboardUnified .communityCard {
+  background: #111827;
+  color: #fff;
+}
+
+.dashboardFuture .climateCard p,
+.dashboardFuture .communityCard p,
+.dashboardUnified .climateCard p,
+.dashboardUnified .communityCard p {
+  color: rgba(255,255,255,.74);
+}
+
+.dashboardFuture .mapCard,
+.dashboardUnified .mapCard {
+  background:
+    linear-gradient(180deg, rgba(205,119,0,.08), rgba(205,119,0,.03)),
+    var(--panel);
+}
+
+.dashboardFuture .mapShape,
+.dashboardUnified .mapShape {
+  background: rgba(205, 119, 0, .18);
+  border-color: rgba(205, 119, 0, .26);
+}
+
+.dashboardFuture .mapBadge,
+.dashboardUnified .mapBadge {
+  background: var(--primary);
+  color: #fff;
+}
+
+.dashboardFuture .dotKey,
+.dashboardUnified .dotKey {
+  background: var(--primary) !important;
+}
+
+.dashboardFuture .avatarGroup span,
+.dashboardUnified .avatarGroup span,
+.dashboardFuture .tagChip,
+.dashboardUnified .tagChip {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+
+.dashboardFuture .dataTable th,
+.dashboardFuture .dataTable td,
+.dashboardUnified .dataTable th,
+.dashboardUnified .dataTable td {
+  border-bottom-color: var(--line);
+  color: var(--text);
+}
+
+.dashboardFuture .dashGhostBtn,
+.dashboardUnified .dashGhostBtn,
+.dashboardFuture .dashMenuBtn,
+.dashboardUnified .dashMenuBtn {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Hard stop for old dashboard accents. */
+.up,
+.trend.up,
+.status.occupied,
+.status.active,
+.status.published,
+.status.resolved,
+.statusPill,
+.dashboardFuture .statusPill,
+.dashboardUnified .statusPill {
+  color: var(--primary) !important;
+  background: rgba(205, 119, 0, .10) !important;
+  border-color: rgba(205, 119, 0, .22) !important;
+}
+.status::before,
+.dotKey,
+.progress-bar span,
+.progressTrack span,
+.miniBars span {
+  background: var(--primary) !important;
+}
+
+
+/* --- Light mode visibility and uniform table cleanup --- */
+body:not(.dark-mode) .app,
+body:not(.dark-mode) .main,
+body:not(.dark-mode) .card,
+body:not(.dark-mode) .table-card,
+body:not(.dark-mode) .panel-card,
+body:not(.dark-mode) .tableCard,
+body:not(.dark-mode) .dashboardFormShell,
+body:not(.dark-mode) .listingWizardShell,
+body:not(.dark-mode) .listingWizardForm,
+body:not(.dark-mode) .wizardPanel,
+body:not(.dark-mode) .mini-stat,
+body:not(.dark-mode) .wizardStatusBox,
+body:not(.dark-mode) .field,
+body:not(.dark-mode) .field-inline,
+body:not(.dark-mode) label,
+body:not(.dark-mode) .formSectionTitle h3,
+body:not(.dark-mode) .dashboardTitle h1,
+body:not(.dark-mode) .dashboardTitle p,
+body:not(.dark-mode) .wizardStatusBox strong,
+body:not(.dark-mode) .wizardStatusBox small,
+body:not(.dark-mode) .listingWizardReview strong,
+body:not(.dark-mode) .listingWizardReview small,
+body:not(.dark-mode) .table-title-cell strong,
+body:not(.dark-mode) .table-title-cell span,
+body:not(.dark-mode) td,
+body:not(.dark-mode) th {
+  color: var(--text);
+}
+body:not(.dark-mode) .muted,
+body:not(.dark-mode) .dashboardTitle p,
+body:not(.dark-mode) .wizardStatusBox small,
+body:not(.dark-mode) .mini-stat small,
+body:not(.dark-mode) .table-title-cell span,
+body:not(.dark-mode) .metric-box p,
+body:not(.dark-mode) .page-title p,
+body:not(.dark-mode) .tableBulkHint {
+  color: var(--muted);
+}
+body:not(.dark-mode) .table-shell,
+body:not(.dark-mode) .tableWrap{
+  background:#fff;
+  border-color:var(--line);
+}
+body:not(.dark-mode) th{background:#fff8ef;}
+body:not(.dark-mode) td{background:#fff;}
+body:not(.dark-mode) tbody tr:hover td{background:rgba(205,119,0,.05);}
+body:not(.dark-mode) .nav-link:hover{background:rgba(205,119,0,.06);}
+body:not(.dark-mode) .ghost-btn,
+body:not(.dark-mode) .tiny-btn,
+body:not(.dark-mode) .tinyBtn,
+body:not(.dark-mode) .dashGhostBtn,
+body:not(.dark-mode) .btn.alt,
+body:not(.dark-mode) .wizardStepChip,
+body:not(.dark-mode) .badgeSoft,
+body:not(.dark-mode) .wizardStatusBox,
+body:not(.dark-mode) .listingWizardReview .mini-stat{
+  background:var(--panel);
+  color:var(--text);
+  border-color:var(--line);
+}
+body:not(.dark-mode) .wizardStepChip.active{
+  background:rgba(205,119,0,.12);
+  color:var(--primary);
+  border-color:rgba(205,119,0,.22);
+}
+body:not(.dark-mode) .wizardStepChip.active span{
+  background:var(--primary);
+  color:#fff;
+  border-color:transparent;
+}
+body:not(.dark-mode) .formGrid.autoFit .input,
+body:not(.dark-mode) .field input,
+body:not(.dark-mode) .field select,
+body:not(.dark-mode) .field textarea,
+body:not(.dark-mode) .search input,
+body:not(.dark-mode) select.input,
+body:not(.dark-mode) textarea.input{
+  background:#fff;
+  color:var(--text);
+}
+
+
+/* Match every dashboard page to the main dashboard dark palette */
+body.dark-mode .app,
+body.dark-mode .main,
+body.dark-mode .dashboardShell.dashboardFuture,
+body.dark-mode .dashboardShell.dashboardUnified,
+body.dark-mode .dashboardFuture,
+body.dark-mode .dashboardUnified,
+body.dark-mode .dashWrap {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body.dark-mode .dashboardFuture .dashboardSidebar,
+body.dark-mode .dashboardUnified .dashboardSidebar,
+body.dark-mode .dashboardFuture .sidebar,
+body.dark-mode .dashboardUnified .sidebar,
+body.dark-mode .sidebar {
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  color: var(--text);
+  border-right-color: var(--line);
+}
+
+body.dark-mode .dashboardFuture .dashboardPanel,
+body.dark-mode .dashboardUnified .dashboardPanel,
+body.dark-mode .dashboardFuture .mainDash,
+body.dark-mode .dashboardUnified .mainDash,
+body.dark-mode .dashboardFuture .metricCard,
+body.dark-mode .dashboardFuture .contentCard,
+body.dark-mode .dashboardUnified .metricCard,
+body.dark-mode .dashboardUnified .contentCard,
+body.dark-mode .dashboardUnified .dashCard,
+body.dark-mode .dashboardUnified .miniCard,
+body.dark-mode .dashboardUnified .tableCard,
+body.dark-mode .card,
+body.dark-mode .table-card,
+body.dark-mode .panel-card,
+body.dark-mode .tableCard {
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+body.dark-mode .mini-stat,
+body.dark-mode .stat-card,
+body.dark-mode .summary-item,
+body.dark-mode .property-card,
+body.dark-mode .list-row,
+body.dark-mode .metric-box,
+body.dark-mode .page-banner,
+body.dark-mode .profile-card,
+body.dark-mode .wizardStatusBox,
+body.dark-mode .badgeSoft,
+body.dark-mode .wizardStepChip,
+body.dark-mode .listingWizardReview .mini-stat,
+body.dark-mode .tableCard.dashboardFormCard {
+  background: var(--panel-soft);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+body.dark-mode th {
+  background: rgba(148, 163, 184, .08);
+  color: var(--muted);
+}
+
+body.dark-mode td {
+  background: var(--panel);
+  color: var(--text);
+}
+
+body.dark-mode tbody tr:hover td,
+body.dark-mode .tableWrap tbody tr:hover td,
+body.dark-mode .dataTable tbody tr:hover td,
+body.dark-mode .tableCard tbody tr:hover td {
+  background: rgba(148, 163, 184, .06);
+}
+
+body.dark-mode .dashboardFuture .climateCard,
+body.dark-mode .dashboardFuture .communityCard,
+body.dark-mode .dashboardUnified .climateCard,
+body.dark-mode .dashboardUnified .communityCard {
+  background: #111827;
+  color: #ffffff;
+}
+
+body.dark-mode .dashboardFuture .climateCard p,
+body.dark-mode .dashboardFuture .communityCard p,
+body.dark-mode .dashboardUnified .climateCard p,
+body.dark-mode .dashboardUnified .communityCard p,
+body.dark-mode .dashboardFuture .dashSidebarMeta,
+body.dark-mode .dashboardFuture .metricCard small,
+body.dark-mode .dashboardFuture .metricDelta,
+body.dark-mode .dashboardFuture .contentCard p,
+body.dark-mode .dashboardFuture .progressMeta,
+body.dark-mode .dashboardUnified .metricCard small,
+body.dark-mode .dashboardUnified .metricDelta,
+body.dark-mode .dashboardUnified .contentCard p,
+body.dark-mode .dashboardUnified .progressMeta {
+  color: var(--muted);
+}
+
+body.dark-mode .dashboardFuture .gauge,
+body.dark-mode .dashboardUnified .gauge,
+body.dark-mode .dashboardFuture .smallRing,
+body.dark-mode .dashboardUnified .smallRing,
+body.dark-mode .dashboardFuture .ring,
+body.dark-mode .dashboardUnified .ring {
+  background: conic-gradient(var(--primary) 0 var(--gauge-angle, 220deg), rgba(229, 231, 235, .18) var(--gauge-angle, 220deg) 360deg);
+}
+
+body.dark-mode .dashboardFuture .gauge::before,
+body.dark-mode .dashboardUnified .gauge::before,
+body.dark-mode .dashboardFuture .smallRing::before,
+body.dark-mode .dashboardUnified .smallRing::before,
+body.dark-mode .dashboardFuture .ring::before,
+body.dark-mode .dashboardUnified .ring::before {
+  background: var(--panel);
 }

@@ -100,7 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   prevBtn?.addEventListener('click', () => showStep(currentStep - 1));
 
-  form.addEventListener('submit', () => {
+  form.addEventListener('submit', (event) => {
+    const firstInvalidStep = panels.findIndex((panel) => Array.from(panel.querySelectorAll('[required]')).some((field) => !field.value));
+    if (firstInvalidStep !== -1) {
+      event.preventDefault();
+      showStep(firstInvalidStep);
+      const invalidField = panels[firstInvalidStep].querySelector('[required]:invalid, [required]');
+      invalidField?.focus();
+      invalidField?.reportValidity?.();
+      setStatus('Complete the required fields before saving.');
+      return;
+    }
     localStorage.removeItem(storageKey);
     localStorage.removeItem(`${storageKey}:step`);
     setStatus('Submitting listing...');

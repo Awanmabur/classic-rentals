@@ -9,7 +9,7 @@ function baseTemplate({ preheader = '', heading, intro, ctaLabel, ctaUrl, body =
       </div>
       <div style="padding:28px">
         ${body ? `<div style="color:#d1d5db;font-size:15px;line-height:1.7;margin-bottom:20px">${body}</div>` : ''}
-        ${ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;background:#22c55e;color:#04130a;text-decoration:none;padding:14px 18px;border-radius:12px;font-weight:700">${ctaLabel}</a>` : ''}
+        ${ctaUrl ? `<a href="${ctaUrl}" style="display:inline-block;background:#cd7700;color:#fff;text-decoration:none;padding:14px 18px;border-radius:12px;font-weight:700">${ctaLabel}</a>` : ''}
       </div>
       <div style="padding:18px 28px;border-top:1px solid #1f2937;color:#94a3b8;font-size:13px;line-height:1.6">
         ${footer || 'Classic Rentals · Premium rentals marketplace'}

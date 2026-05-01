@@ -4,6 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><%= title || 'Dashboard' %></title>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('dashboard-dark-mode') === 'dark') {
+          document.documentElement.classList.add('dashboard-theme-dark');
+        }
+      } catch (error) {}
+    }());
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,10 +26,10 @@
       --text: #111827;
       --muted: #6b7280;
       --line: #e5e7eb;
-      --success: #16a34a;
+      --success: #b36800;
       --warning: #d97706;
       --danger: #dc2626;
-      --info: #2563eb;
+      --info: #6b7280;
       --shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
       --shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.04);
       --radius-xl: 22px;
@@ -67,7 +76,7 @@
     .app.sidebar-collapsed .main { margin-left: var(--sidebar-mini); width: calc(100% - var(--sidebar-mini)); }
     .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; padding: 0; background: transparent; border-radius: 0; border: 0; box-shadow: none; }
-    .brand-logo { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: var(--primary); color: #fff; font-weight: 800; box-shadow: var(--shadow-soft); flex-shrink: 0; }
+    .brand-logo { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: transparent; color: var(--primary); font-weight: 800; box-shadow: none; flex-shrink: 0; border: 0; }
     .brand h1 { font-size: .88rem; line-height: 1.1; white-space: nowrap; }
     .brand p { margin-top: 2px; color: var(--muted); font-size: .68rem; white-space: nowrap; }
     .collapse-btn, .menu-btn, .icon-btn, .theme-btn, .view-btn {
@@ -137,7 +146,7 @@
     .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .stat-icon { width: 36px; height: 36px; border-radius: var(--radius-pill); display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); font-size: 13px; }
     .trend { padding: 4px 7px; font-weight: 700; }
-    .up { color: var(--success); background: rgba(22,163,74,.09); }
+    .up { color: var(--success); background: rgba(179, 104, 0,.09); }
     .down { color: var(--danger); background: rgba(220,38,38,.08); }
     .stat-card h5 { font-size: 1rem; line-height: 1.2; margin: 8px 0 2px; }
     .chart-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; color: var(--muted); font-size: .68rem; }
@@ -162,9 +171,9 @@
     .property-side strong { display: block; font-size: .82rem; margin-bottom: 6px; }
     .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; font-weight: 700; }
     .status::before { content:""; width:6px; height:6px; border-radius:50%; background: currentColor; }
-    .status.occupied { color: var(--success); background: rgba(22,163,74,.09); }
-    .status.pending { color: var(--warning); background: rgba(217,119,6,.09); }
-    .status.vacant { color: var(--info); background: rgba(37,99,235,.09); }
+    .status.occupied { color: var(--success); background: rgba(179, 104, 0,.09); }
+    .status.pending { color: var(--warning); background: rgba(154, 107, 0,.09); }
+    .status.vacant { color: var(--info); background: rgba(107,114,128,.10); }
     .progress-card { overflow: hidden; padding: 0; }
     .progress-top { padding: 16px 16px 12px; }
     .progress-body { display: grid; gap: 10px; padding: 0 16px 16px; }
@@ -653,6 +662,7 @@
     const sidebarThemeBtn = document.getElementById('sidebarThemeBtn');
     const sidebarTooltip = document.getElementById('sidebarTooltip');
     const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+    const themeStorageKey = 'dashboard-dark-mode';
     const statusFilter = document.getElementById('statusFilter');
     const categoryFilter = document.getElementById('categoryFilter');
     const propertySearch = document.getElementById('propertySearch');
@@ -780,10 +790,25 @@
       const dpr = window.devicePixelRatio || 1; const rect = canvas.getBoundingClientRect(); if (!rect.width || !rect.height) return;
       canvas.width = Math.max(1, rect.width * dpr); canvas.height = Math.max(1, rect.height * dpr); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr); drawChart();
     }
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); syncLayoutGuards(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 100); }); }
+    function applyStoredTheme() {
+      const storedTheme = localStorage.getItem(themeStorageKey);
+      const preloadDark = document.documentElement.classList.contains('dashboard-theme-dark');
+      if (storedTheme === 'dark' || preloadDark) document.body.classList.add('dark-mode');
+      if (storedTheme === 'light') document.body.classList.remove('dark-mode');
+      document.documentElement.classList.toggle('dashboard-theme-dark', document.body.classList.contains('dark-mode'));
+    }
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      document.documentElement.classList.toggle('dashboard-theme-dark', isDark);
+      localStorage.setItem(themeStorageKey, isDark ? 'dark' : 'light');
+      syncLayoutGuards();
+      requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 100); });
+    }
     themeBtn?.addEventListener('click', toggleTheme);
     sidebarThemeBtn?.addEventListener('click', (e) => { e.preventDefault(); toggleTheme(); });
     window.addEventListener('resize', () => { syncLayoutGuards(); if (!isMobile()) closeSidebar(); hideSidebarTooltip(); updateIcons(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 80); }); });
+    applyStoredTheme();
     syncLayoutGuards(); updateIcons(); filterProperties(); requestAnimationFrame(() => { resizeCanvas(); setTimeout(resizeCanvas, 100); });
   </script>
 </body>

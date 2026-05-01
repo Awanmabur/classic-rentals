@@ -13,6 +13,8 @@ const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
 const { getPagination } = require('../../utils/pagination');
 const { setFlash } = require('../../utils/flash');
+const { createSubscriptionCheckout } = require('../api/billingController');
+const { getMonetizationContext } = require('../../services/monetizationService');
 
 function render(req, res, view, title, extras = {}) {
   return res.render(view, { title, currentPath: req.originalUrl, ...extras });
@@ -618,6 +620,7 @@ exports.upsertSettingAction = asyncHandler(async (req, res) => {
 
 
 exports.billing = asyncHandler(async (req, res) => {
+  const monetization = await getMonetizationContext(req.user);
   const [plans, subscription, billingSummary] = await Promise.all([
     Plan.find({ isActive: true }).sort({ amount: 1 }).lean(),
     Subscription.findOne({ user: req.user._id }).populate('plan').sort({ createdAt: -1 }).lean(),
@@ -634,7 +637,8 @@ exports.billing = asyncHandler(async (req, res) => {
   return render(req, res, 'pages/dashboard/billing', 'Billing', {
     plans,
     subscription,
-    billingSummary: billingSummary[0] || { totalSpent: 0, paidInvoices: 0, subscriptions: 0 }
+    billingSummary: billingSummary[0] || { totalSpent: 0, paidInvoices: 0, subscriptions: 0 },
+    monetization,
   });
 });
 
@@ -644,16 +648,12 @@ exports.startSubscriptionAction = asyncHandler(async (req, res) => {
     setFlash(res, 'error', 'Selected plan was not found.');
     return res.redirect('/dashboard/billing');
   }
-  const startsAt = new Date();
-  const endsAt = new Date(startsAt);
-  if (plan.interval === 'quarterly') endsAt.setMonth(endsAt.getMonth() + 3);
-  else if (plan.interval === 'yearly') endsAt.setFullYear(endsAt.getFullYear() + 1);
-  else if (plan.interval === 'one-time') endsAt.setFullYear(endsAt.getFullYear() + 10);
-  else endsAt.setMonth(endsAt.getMonth() + 1);
-  await Subscription.updateMany({ user: req.user._id, status: { $in: ['trialing', 'active', 'past_due'] } }, { $set: { status: 'cancelled' } });
-  const status = plan.trialDays > 0 ? 'trialing' : 'active';
-  const subscription = await Subscription.create({ user: req.user._id, plan: plan._id, status, startsAt, endsAt, payment: { provider: req.body.provider || 'manual', reference: req.body.reference || '', amount: plan.amount, currency: plan.currency, status: 'paid', paidAt: new Date() } });
-  await AuditLog.create({ actor: req.user._id, action: 'dashboard.billing.start', entityType: 'Subscription', entityId: subscription._id, meta: { plan: plan.slug } });
+  const provider = String(req.body.provider || 'manual').trim().toLowerCase() === 'pesapal' ? 'pesapal' : 'manual';
+  const result = await createSubscriptionCheckout({ user: req.user, plan, provider, reference: req.body.reference });
+  await AuditLog.create({ actor: req.user._id, action: provider === 'pesapal' ? 'dashboard.billing.checkout' : 'dashboard.billing.start', entityType: 'Subscription', entityId: result.subscription._id, meta: { plan: plan.slug, provider, paymentId: result.payment?._id } });
+  if (result.redirectUrl) {
+    return res.redirect(result.redirectUrl);
+  }
   setFlash(res, 'success', `${plan.name} plan activated successfully.`);
   return res.redirect('/dashboard/billing');
 });

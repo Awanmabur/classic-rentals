@@ -7,7 +7,15 @@ const schema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, trim: true, lowercase: true },
   phone: { type: String, trim: true },
+  type: { type: String, enum: ['general', 'viewing', 'reservation', 'booking'], default: 'general', index: true },
   message: { type: String, required: true, maxlength: 2000 },
+  feeSnapshot: {
+    label: String,
+    amount: { type: Number, min: 0 },
+    currency: String,
+    status: { type: String, enum: ['not_required', 'pending', 'paid'], default: 'not_required' },
+    reference: String,
+  },
   status: { type: String, enum: ['new', 'contacted', 'closed'], default: 'new', index: true },
 }, { timestamps: true });
 

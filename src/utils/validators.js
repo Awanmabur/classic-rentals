@@ -18,9 +18,11 @@ exports.validateRegistrationPayload = (body = {}) => {
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
   const confirmPassword = String(body.confirmPassword || '');
+  const role = 'agent';
   if (firstName.length < 2) errors.firstName = 'First name must be at least 2 characters.';
   if (lastName.length < 2) errors.lastName = 'Last name must be at least 2 characters.';
   if (!exports.validateEmail(email)) errors.email = 'Enter a valid email address.';
+  if (role !== 'agent') errors.role = 'Only agent signup is available.';
   const passwordError = exports.validatePassword(password);
   if (passwordError) errors.password = passwordError;
   if (confirmPassword && password !== confirmPassword) errors.confirmPassword = 'Passwords do not match.';

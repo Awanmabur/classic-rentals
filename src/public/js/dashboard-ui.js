@@ -201,8 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const applyStoredTheme = () => {
     const storedTheme = localStorage.getItem(themeStorageKey);
-    if (storedTheme === 'dark') document.body.classList.add('dark-mode');
+    const preloadDark = document.documentElement.classList.contains('dashboard-theme-dark');
+    if (storedTheme === 'dark' || preloadDark) document.body.classList.add('dark-mode');
     if (storedTheme === 'light') document.body.classList.remove('dark-mode');
+    document.documentElement.classList.toggle('dashboard-theme-dark', document.body.classList.contains('dark-mode'));
   };
 
   const updateIcons = () => {
@@ -212,7 +214,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const toggleTheme = () => {
     document.body.classList.toggle('dark-mode');
-    localStorage.setItem(themeStorageKey, document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    const isDark = document.body.classList.contains('dark-mode');
+    document.documentElement.classList.toggle('dashboard-theme-dark', isDark);
+    localStorage.setItem(themeStorageKey, isDark ? 'dark' : 'light');
     resizeCharts();
   };
 

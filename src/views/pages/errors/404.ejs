@@ -1,10 +1,19 @@
 <%- include('../../partials/head', { title }) %>
 <%- include('../../partials/nav') %>
-<section class="authWrap">
-  <div class="panel authCard">
-    <h1>404</h1>
-    <p style="color:var(--muted)">The page you requested could not be found.</p>
-    <a class="btn" href="/">Back home</a>
+<section class="hero" style="padding:56px 0 28px; min-height:52vh; display:flex; align-items:center;">
+  <div class="wrap" style="width:100%;">
+    <div class="heroShell" style="max-width:980px; margin:0 auto; text-align:center;">
+      <span class="pill">Page not found</span>
+      <h1 style="margin-top:14px;">That page is missing</h1>
+      <p class="muted" style="max-width:620px; margin:14px auto 0;">
+        The page you requested could not be found. Use the same main site navigation below to jump back into listings, home, or your dashboard.
+      </p>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:24px;">
+        <a class="btn primary" href="/">Back home</a>
+        <a class="btn" href="/listings">Browse listings</a>
+        <% if (currentUser) { %><a class="btn" href="/dashboard">Open dashboard</a><% } %>
+      </div>
+    </div>
   </div>
 </section>
 <%- include('../../partials/footer') %>

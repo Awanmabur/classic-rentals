@@ -64,6 +64,7 @@ exports.registerAction = asyncHandler(async (req, res) => {
     lastName: String(req.body.lastName || '').trim(),
     email: normalizeEmail(req.body.email),
     phone: String(req.body.phone || '').trim(),
+    role: 'agent',
     password: String(req.body.password || ''),
     confirmPassword: String(req.body.confirmPassword || ''),
   };
@@ -75,7 +76,7 @@ exports.registerAction = asyncHandler(async (req, res) => {
   if (exists) {
     return res.status(409).render('pages/auth/register', { title: 'Create account', formErrors: { email: 'An account with that email already exists.' }, old: { ...payload, password: '', confirmPassword: '' } });
   }
-  const user = await User.create({ firstName: payload.firstName, lastName: payload.lastName, email: payload.email, phone: payload.phone, password: payload.password, role: 'user' });
+  const user = await User.create({ firstName: payload.firstName, lastName: payload.lastName, email: payload.email, phone: payload.phone, password: payload.password, role: 'agent' });
   setAuthCookie(res, signAccessToken(user));
   await issueEmailVerification(user);
   await AuditLog.create({ actor: user._id, action: 'auth.register.web', entityType: 'User', entityId: user._id, meta: { email: user.email } });

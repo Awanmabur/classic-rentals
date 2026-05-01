@@ -1,3 +1,7 @@
+<%
+  const safeCurrentUser = typeof currentUser !== 'undefined' ? currentUser : (typeof locals !== 'undefined' && typeof locals.currentUser !== 'undefined' ? locals.currentUser : null);
+  const safeYear = typeof year !== 'undefined' ? year : new Date().getFullYear();
+%>
 <footer class="footer">
   <div class="wrap footerGrid">
     <div>
@@ -24,7 +28,7 @@
     </div>
     <div>
       <h4>Account</h4>
-      <% if (currentUser) { %>
+      <% if (safeCurrentUser) { %>
         <p><a href="/dashboard">Dashboard</a></p>
         <p><a href="/listings/create">Post listing</a></p>
         <p><a href="/listings/manage">Manage listings</a></p>
@@ -35,13 +39,14 @@
     </div>
     <div>
       <h4>Contact</h4>
-      <p><a href="tel:+211000000000">+211 000 000 000</a></p>
+      <p><a href="tel:+256781977217">+256 781 977 217</a></p>
+      <p><a href="tel:+256776169893">+256 776 169 893</a></p>
       <p><a href="mailto:info@classicrentals.com">info@classicrentals.com</a></p>
       <p>Juba, South Sudan</p>
     </div>
   </div>
   <div class="wrap footerBottom">
-    <p>© <%= year %> Classic Rentals. All rights reserved.</p>
+    <p>© <%= safeYear %> Classic Rentals. All rights reserved.</p>
   </div>
   <div id="toast" class="toast" aria-live="polite"></div>
   <script src="/js/home.js"></script>

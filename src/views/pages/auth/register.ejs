@@ -1,23 +1,85 @@
 <%- include('../../partials/head', { title }) %>
-<%- include('../../partials/nav') %>
-<%- include('../../partials/toast') %>
-<section class="authWrap">
-  <form class="panel authCard" id="registerForm" action="/auth/register" method="post">
-    <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-    <h1 style="margin-top:0">Create your account</h1>
-    <p style="color:var(--muted)">Create an account to save favorites, send inquiries and manage listings.</p>
-    <div style="display:grid;gap:12px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <label>First name<input class="input" type="text" name="firstName" value="<%= old?.firstName || '' %>" placeholder="First name" required /> <% if (formErrors?.firstName) { %><small style="color:#fca5a5"><%= formErrors.firstName %></small><% } %></label>
-        <label>Last name<input class="input" type="text" name="lastName" value="<%= old?.lastName || '' %>" placeholder="Last name" required /> <% if (formErrors?.lastName) { %><small style="color:#fca5a5"><%= formErrors.lastName %></small><% } %></label>
+<section class="authStandalone">
+  <div class="authStandalone__shell authStandalone__shell--wide">
+    <div class="authBrandPanel panel">
+      <a class="authBrandMark" href="/">CR</a>
+      <span class="authEyebrow">Classic Rentals onboarding</span>
+      <h1>Create your agent account</h1>
+      <p>Sign up once and get the agent workspace automatically. Public renters can browse listings without opening a user account.</p>
+      <div class="authBrandPoints authBrandPoints--stack">
+        <span>Agent dashboard for listings, leads, billing, and follow-up.</span>
+        <span>One clean signup flow with no role picker.</span>
+        <span>You can update your profile later from the dashboard.</span>
       </div>
-      <label>Email<input class="input" type="email" name="email" value="<%= old?.email || '' %>" placeholder="Email address" required /> <% if (formErrors?.email) { %><small style="color:#fca5a5"><%= formErrors.email %></small><% } %></label>
-      <label>Phone<input class="input" type="text" name="phone" value="<%= old?.phone || '' %>" placeholder="Phone number" /></label>
-      <label>Password<input class="input" type="password" name="password" placeholder="Password" required /> <% if (formErrors?.password) { %><small style="color:#fca5a5"><%= formErrors.password %></small><% } %></label>
-      <label>Confirm password<input class="input" type="password" name="confirmPassword" placeholder="Confirm password" required /> <% if (formErrors?.confirmPassword) { %><small style="color:#fca5a5"><%= formErrors.confirmPassword %></small><% } %></label>
-      <button class="btn" type="submit">Create account</button>
-      <a class="tinyBtn" href="/auth/login">Already have an account? Login</a>
     </div>
-  </form>
+    <form class="panel authCard authCard--modern authCard--wide" id="registerForm" action="/auth/register" method="post">
+      <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+      <input type="hidden" name="role" value="agent" />
+      <div class="authCardHead">
+        <span class="authMiniBadge">Agent onboarding</span>
+        <h2>Finish your setup</h2>
+        <p>This signup creates an agent account automatically.</p>
+      </div>
+
+      <div class="authFormGrid authFormGrid--two">
+        <label class="fieldBlock">First name
+          <input class="input" type="text" name="firstName" value="<%= old?.firstName || '' %>" placeholder="First name" required />
+          <% if (formErrors?.firstName) { %><small class="fieldError"><%= formErrors.firstName %></small><% } %>
+        </label>
+        <label class="fieldBlock">Last name
+          <input class="input" type="text" name="lastName" value="<%= old?.lastName || '' %>" placeholder="Last name" required />
+          <% if (formErrors?.lastName) { %><small class="fieldError"><%= formErrors.lastName %></small><% } %>
+        </label>
+        <label class="fieldBlock fieldBlock--wide">Email address
+          <input class="input" type="email" name="email" value="<%= old?.email || '' %>" placeholder="Email address" required />
+          <% if (formErrors?.email) { %><small class="fieldError"><%= formErrors.email %></small><% } %>
+        </label>
+        <label class="fieldBlock fieldBlock--wide">Phone number
+          <input class="input" type="text" name="phone" value="<%= old?.phone || '' %>" placeholder="Phone number" />
+        </label>
+        <label class="fieldBlock">Password
+          <div class="passwordField">
+            <input class="input" id="registerPassword" type="password" name="password" placeholder="Password" required />
+            <button class="passwordToggle" type="button" data-password-toggle="registerPassword" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            </button>
+          </div>
+          <% if (formErrors?.password) { %><small class="fieldError"><%= formErrors.password %></small><% } %>
+        </label>
+        <label class="fieldBlock">Confirm password
+          <div class="passwordField">
+            <input class="input" id="registerConfirmPassword" type="password" name="confirmPassword" placeholder="Confirm password" required />
+            <button class="passwordToggle" type="button" data-password-toggle="registerConfirmPassword" aria-label="Show password">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            </button>
+          </div>
+          <% if (formErrors?.confirmPassword) { %><small class="fieldError"><%= formErrors.confirmPassword %></small><% } %>
+        </label>
+      </div>
+
+      <div class="authActions authActions--stack">
+        <button class="btn" type="submit">Create account</button>
+      </div>
+      <div class="authAltLine">
+        <span>Already have an account?</span>
+        <a href="/auth/login">Login</a>
+      </div>
+    </form>
+  </div>
 </section>
-<%- include('../../partials/footer') %>
+<script>
+  document.querySelectorAll('[data-password-toggle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.passwordToggle);
+      if (!input) return;
+      const visible = input.type === 'text';
+      input.type = visible ? 'password' : 'text';
+      btn.setAttribute('aria-label', visible ? 'Show password' : 'Hide password');
+      btn.innerHTML = visible
+        ? '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.6 10.7a2 2 0 0 0 2.7 2.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9.9 5.1A11.5 11.5 0 0 1 12 5c6.5 0 10 7 10 7a18.8 18.8 0 0 1-3.3 3.9M6.6 6.7C4 8.3 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.4 4.6-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    });
+  });
+</script>
+</body>
+</html>

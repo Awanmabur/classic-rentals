@@ -1,18 +1,110 @@
 const Plan = require('../../models/Plan');
 const Subscription = require('../../models/Subscription');
+const Payment = require('../../models/Payment');
 const AuditLog = require('../../models/AuditLog');
 const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
 const { sendMail } = require('../../services/mailerService');
 const { renderSubscriptionEmail } = require('../../services/emailTemplateService');
+const pesapal = require('../../services/pesapalService');
+const { addInterval } = require('../../services/paymentLifecycleService');
 
-function addInterval(start, interval) {
-  const d = new Date(start);
-  if (interval === 'quarterly') d.setMonth(d.getMonth() + 3);
-  else if (interval === 'yearly') d.setFullYear(d.getFullYear() + 1);
-  else if (interval === 'one-time') d.setFullYear(d.getFullYear() + 10);
-  else d.setMonth(d.getMonth() + 1);
-  return d;
+function normalizeProvider(value = '') {
+  return String(value || 'manual').trim().toLowerCase() === 'pesapal' ? 'pesapal' : 'manual';
+}
+
+function makeReference(prefix = 'SUB') {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+async function createSubscriptionCheckout({ user, plan, provider = 'manual', reference = '' }) {
+  const startsAt = new Date();
+  const endsAt = addInterval(startsAt, plan.interval);
+
+  await Subscription.updateMany(
+    { user: user._id, status: { $in: ['trialing', 'active', 'past_due'] } },
+    { $set: { status: 'cancelled', cancelAtPeriodEnd: false } }
+  );
+
+  const subscription = await Subscription.create({
+    user: user._id,
+    plan: plan._id,
+    status: provider === 'manual' ? (plan.trialDays > 0 ? 'trialing' : 'active') : 'past_due',
+    startsAt,
+    endsAt,
+    payment: {
+      provider,
+      reference: provider === 'manual' ? String(reference || '').trim() : '',
+      amount: plan.amount,
+      currency: plan.currency,
+      status: provider === 'manual' ? 'paid' : 'pending',
+      paidAt: provider === 'manual' ? new Date() : undefined,
+    },
+  });
+
+  if (provider === 'manual') {
+    const billingUrl = `${process.env.APP_URL || 'http://localhost:4000'}/dashboard/billing`;
+    const mail = renderSubscriptionEmail({ name: user.firstName, planName: plan.name, billingUrl, expiresAt: endsAt.toDateString() });
+    await sendMail({ to: user.email, ...mail }).catch(() => null);
+    return { subscription, payment: null, redirectUrl: null, pending: false };
+  }
+
+  if (!pesapal.isConfigured()) throw new ApiError(500, 'Pesapal is not configured on this server yet.');
+
+  const merchantReference = makeReference('SUB');
+  const payment = await Payment.create({
+    merchantReference,
+    purpose: 'subscription',
+    provider,
+    status: 'pending',
+    user: user._id,
+    plan: plan._id,
+    subscription: subscription._id,
+    amount: plan.amount,
+    currency: plan.currency,
+    description: `${plan.name} subscription`,
+  });
+
+  const appUrl = (process.env.APP_URL || 'http://localhost:4000').replace(/\/$/, '');
+  const checkout = await pesapal.submitOrder({
+    merchantReference,
+    amount: plan.amount,
+    currency: plan.currency,
+    description: `${plan.name} subscription`,
+    callbackUrl: `${appUrl}/api/payments/pesapal/callback`,
+    cancellationUrl: `${appUrl}/dashboard/billing`,
+    billingAddress: {
+      email_address: user.email,
+      phone_number: user.phone || undefined,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      country_code: (process.env.DEFAULT_COUNTRY_CODE || 'UG').slice(0, 2).toUpperCase(),
+    },
+  });
+
+  payment.providerMeta = {
+    ...(payment.providerMeta || {}),
+    notificationId: checkout.notificationId,
+    orderTrackingId: checkout.orderTrackingId,
+    redirectUrl: checkout.redirectUrl,
+    callbackUrl: `${appUrl}/api/payments/pesapal/callback`,
+    cancellationUrl: `${appUrl}/dashboard/billing`,
+    ipnUrl: `${appUrl}/api/payments/pesapal/ipn`,
+    payload: checkout.payload,
+  };
+  await payment.save();
+
+  subscription.payment = {
+    provider,
+    reference: merchantReference,
+    amount: plan.amount,
+    currency: plan.currency,
+    status: 'pending',
+    meta: { paymentId: payment._id, orderTrackingId: checkout.orderTrackingId },
+  };
+  await subscription.save();
+
+  return { subscription, payment, redirectUrl: checkout.redirectUrl, pending: true };
 }
 
 exports.getPlans = asyncHandler(async (_req, res) => {
@@ -28,24 +120,24 @@ exports.getMySubscription = asyncHandler(async (req, res) => {
 exports.startSubscription = asyncHandler(async (req, res) => {
   const plan = await Plan.findById(req.body.planId);
   if (!plan || !plan.isActive) throw new ApiError(404, 'Plan not found');
-  const startsAt = new Date();
-  const endsAt = addInterval(startsAt, plan.interval);
 
-  await Subscription.updateMany({ user: req.user._id, status: { $in: ['trialing', 'active', 'past_due'] } }, { $set: { status: 'cancelled', cancelAtPeriodEnd: false } });
-  const subscription = await Subscription.create({
-    user: req.user._id,
-    plan: plan._id,
-    status: plan.trialDays > 0 ? 'trialing' : 'active',
-    startsAt,
-    endsAt,
-    payment: { provider: req.body.provider || 'manual', reference: req.body.reference || '', amount: plan.amount, currency: plan.currency, status: 'paid', paidAt: new Date() },
+  const provider = normalizeProvider(req.body.provider);
+  const result = await createSubscriptionCheckout({ user: req.user, plan, provider, reference: req.body.reference });
+
+  await AuditLog.create({
+    actor: req.user._id,
+    action: provider === 'pesapal' ? 'billing.subscription.checkout' : 'billing.subscription.start',
+    entityType: 'Subscription',
+    entityId: result.subscription._id,
+    meta: { plan: plan.slug, provider, paymentId: result.payment?._id },
   });
 
-  const billingUrl = `${process.env.APP_URL || 'http://localhost:4000'}/dashboard/billing`;
-  const mail = renderSubscriptionEmail({ name: req.user.firstName, planName: plan.name, billingUrl, expiresAt: endsAt.toDateString() });
-  await sendMail({ to: req.user.email, ...mail });
-  await AuditLog.create({ actor: req.user._id, action: 'billing.subscription.start', entityType: 'Subscription', entityId: subscription._id, meta: { plan: plan.slug } });
-  res.status(201).json({ success: true, message: 'Subscription started', data: subscription });
+  res.status(201).json({
+    success: true,
+    message: provider === 'pesapal' ? 'Checkout started successfully' : 'Subscription started',
+    data: result.subscription,
+    meta: result.redirectUrl ? { redirectUrl: result.redirectUrl, paymentId: result.payment._id } : undefined,
+  });
 });
 
 exports.cancelMySubscription = asyncHandler(async (req, res) => {
@@ -57,3 +149,5 @@ exports.cancelMySubscription = asyncHandler(async (req, res) => {
   await AuditLog.create({ actor: req.user._id, action: 'billing.subscription.cancel', entityType: 'Subscription', entityId: subscription._id, meta: null });
   res.json({ success: true, message: 'Subscription cancelled', data: subscription });
 });
+
+exports.createSubscriptionCheckout = createSubscriptionCheckout;
