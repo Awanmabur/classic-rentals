@@ -1,6 +1,8 @@
 const Subscription = require('../models/Subscription');
 const Inquiry = require('../models/Inquiry');
 const Payment = require('../models/Payment');
+const Listing = require('../models/Listing');
+const { markPromotionConversion } = require('./promotionService');
 
 function addInterval(start, interval) {
   const d = new Date(start);
@@ -72,6 +74,28 @@ async function syncPaymentFromPesapal(payment, transaction = {}) {
         await inquiry.save();
       }
     }
+    if (payment.purpose === 'listing_posting' && payment.listing) {
+      const listing = await Listing.findById(payment.listing);
+      if (listing) {
+        listing.monetization = {
+          ...(listing.monetization || {}),
+          postingFeeStatus: 'paid',
+          postingFeeReference: transaction.confirmation_code || payment.merchantReference,
+        };
+        if (listing.status === 'pending') {
+          listing.status = 'published';
+          listing.publishedAt = listing.publishedAt || new Date();
+        }
+        await listing.save();
+      }
+    }
+    if (payment.promotion && payment.split?.promoterAmount > 0) {
+      await markPromotionConversion({
+        promotionId: payment.promotion,
+        amount: payment.split.promoterAmount,
+        currency: payment.currency,
+      }).catch(() => null);
+    }
   } else if (mappedStatus === 'failed' || mappedStatus === 'reversed') {
     if (payment.subscription) {
       const subscription = await Subscription.findById(payment.subscription);
@@ -101,6 +125,16 @@ async function syncPaymentFromPesapal(payment, transaction = {}) {
           status: 'pending',
         };
         await inquiry.save();
+      }
+    }
+    if (payment.purpose === 'listing_posting' && payment.listing) {
+      const listing = await Listing.findById(payment.listing);
+      if (listing) {
+        listing.monetization = {
+          ...(listing.monetization || {}),
+          postingFeeStatus: 'pending',
+        };
+        await listing.save();
       }
     }
   }

@@ -60,7 +60,7 @@
                 <td>
                   <div class="table-title-cell">
                     <strong><%= item.name || (item.sender ? `${item.sender.firstName} ${item.sender.lastName}` : 'Guest') %></strong>
-                    <span><%= item.email || item.sender?.email || '-' %></span>
+                    <span><%= item.contactLocked ? 'Contact hidden until payment' : (item.email || item.sender?.email || '-') %></span>
                   </div>
                 </td>
                 <td>
@@ -70,7 +70,7 @@
                   </div>
                 </td>
                 <td><span class="muted"><%= item.message %></span></td>
-                <td><span class="status soft <%= item.status === 'new' ? 'pending' : item.status === 'contacted' ? 'published' : 'vacant' %>"><%= item.status %></span></td>
+                <td><span class="status soft <%= item.status === 'new' ? 'pending' : item.status === 'contacted' ? 'published' : 'vacant' %>"><%= item.contactLocked ? 'payment pending' : item.status %></span></td>
                 <td><%= new Date(item.createdAt).toLocaleString() %></td>
                 <td>
                   <div class="table-actions-row">

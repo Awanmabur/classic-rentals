@@ -7,6 +7,7 @@ const upload = require('../../middlewares/upload');
 const router = express.Router();
 
 router.get('/', authenticateOptional, controller.getListings);
+router.get('/:id/contact', authenticateOptional, controller.getListingContact);
 router.get('/:slug', authenticateOptional, controller.getListingBySlug);
 router.post('/', authenticateRequired, authorize('super-admin', 'admin', 'agent', 'user'), upload.array('images', 12), controller.createListing);
 router.put('/:id', authenticateRequired, authorize('super-admin', 'admin', 'agent', 'user'), upload.array('images', 12), controller.updateListing);

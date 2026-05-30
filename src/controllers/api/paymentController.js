@@ -1,16 +1,24 @@
 const Payment = require('../../models/Payment');
+const Listing = require('../../models/Listing');
 const AuditLog = require('../../models/AuditLog');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
 const { getTransactionStatus } = require('../../services/pesapalService');
 const { syncPaymentFromPesapal } = require('../../services/paymentLifecycleService');
+const {
+  CONTACT_ACCESS_COOKIE,
+  parseContactAccessTokens,
+  serializeContactAccessTokens,
+} = require('../../services/contactAccessService');
 
 async function syncUsingReference({ merchantReference, orderTrackingId }) {
+  const filters = [
+    ...(merchantReference ? [{ merchantReference }] : []),
+    ...(orderTrackingId ? [{ 'providerMeta.orderTrackingId': orderTrackingId }] : []),
+  ];
+  if (!filters.length) throw new ApiError(400, 'Missing payment reference');
   const payment = await Payment.findOne({
-    $or: [
-      ...(merchantReference ? [{ merchantReference }] : []),
-      ...(orderTrackingId ? [{ 'providerMeta.orderTrackingId': orderTrackingId }] : []),
-    ],
+    $or: filters,
   });
   if (!payment) throw new ApiError(404, 'Payment not found');
   const trackingId = orderTrackingId || payment.providerMeta?.orderTrackingId;
@@ -32,10 +40,21 @@ exports.pesapalCallback = asyncHandler(async (req, res) => {
   const merchantReference = req.query.OrderMerchantReference || req.query.orderMerchantReference;
   const orderTrackingId = req.query.OrderTrackingId || req.query.orderTrackingId;
   const payment = await syncUsingReference({ merchantReference, orderTrackingId });
+  const listing = payment.listing ? await Listing.findById(payment.listing).select('slug').lean() : null;
+
+  if (payment.status === 'paid' && payment.purpose === 'inquiry' && payment.listing) {
+    const existingTokens = parseContactAccessTokens(req.signedCookies?.[CONTACT_ACCESS_COOKIE]);
+    res.cookie(CONTACT_ACCESS_COOKIE, serializeContactAccessTokens([...existingTokens, payment.merchantReference]), {
+      signed: true,
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 90,
+    });
+  }
 
   const redirectPath = payment.purpose === 'subscription'
     ? '/dashboard/billing'
-    : payment.listing ? `/listings/${payment.listing}` : '/listings';
+    : listing?.slug ? `/listings/${listing.slug}` : '/listings';
 
   if (req.accepts('html')) {
     const { setFlash } = require('../../utils/flash');

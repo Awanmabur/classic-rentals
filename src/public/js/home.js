@@ -6,6 +6,15 @@
   const toast = document.getElementById('toast');
   const listings = Array.isArray(window.__HOME_LISTINGS__) ? window.__HOME_LISTINGS__ : [];
   const isAuthenticated = Boolean(window.__IS_AUTHENTICATED__);
+  const guestFavoritesKey = 'classic-rentals-guest-favorites';
+
+  function loadGuestFavorites() {
+    try { return new Set(JSON.parse(localStorage.getItem(guestFavoritesKey) || '[]').map(String)); } catch { return new Set(); }
+  }
+
+  function saveGuestFavorites(items) {
+    try { localStorage.setItem(guestFavoritesKey, JSON.stringify([...items])); } catch {}
+  }
 
   const listingModal = document.getElementById('listingModal');
   const inquiryModal = document.getElementById('inquiryModal');
@@ -58,8 +67,13 @@
     const favBtn = e.target.closest('[data-favorite-id]');
     if (favBtn) {
       if (!isAuthenticated) {
-        showToast('Please log in to save favorites.', true);
-        setTimeout(() => { window.location.href = '/auth/login'; }, 700);
+        const id = favBtn.getAttribute('data-favorite-id');
+        const guestFavorites = loadGuestFavorites();
+        if (guestFavorites.has(id)) guestFavorites.delete(id);
+        else guestFavorites.add(id);
+        saveGuestFavorites(guestFavorites);
+        document.querySelectorAll(`[data-favorite-id="${id}"]`).forEach(el => el.classList.toggle('active', guestFavorites.has(id)));
+        showToast(guestFavorites.has(id) ? 'Saved to this browser.' : 'Removed from saved listings.');
         return;
       }
       try {
@@ -104,6 +118,11 @@
   if (closeInquiryModal) closeInquiryModal.addEventListener('click', () => closeModal(inquiryModal));
   if (openInquiryBtn) {
     openInquiryBtn.addEventListener('click', () => {
+      const item = listings.find(x => String(x._id || x.id) === String(activeListingId));
+      if (item?.slug || item?.url) {
+        window.location.href = item.url || `/listings/${item.slug}`;
+        return;
+      }
       closeModal(listingModal);
       if (inquiryModal) {
         inquiryModal.classList.add('show');

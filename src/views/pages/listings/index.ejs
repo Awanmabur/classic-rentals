@@ -2684,8 +2684,8 @@ const FAVORITE_IDS = <%- favoriteIdsJson %>;
 const AREA_LABEL = <%- areaLabelsJson %>;
 const IS_AUTHENTICATED = <%- JSON.stringify(Boolean(currentUser)) %>;
 const POST_LIST_URL = <%- JSON.stringify(currentUser ? '/listings/create' : '/auth/register') %>;
-const LOGIN_URL = '/auth/login';
 const PLACEHOLDER_IMAGE = '/img/placeholder.jpg';
+const GUEST_FAVORITES_KEY = 'classic-rentals-guest-favorites';
 
 const TYPE_LABEL = {
   all: 'All',
@@ -2700,6 +2700,12 @@ const TYPE_LABEL = {
 };
 const PLATFORM_LABEL = { airbnb: 'Airbnb', direct: 'Direct', agent: 'Agent' };
 const el = (id) => document.getElementById(id);
+function loadGuestFavorites() {
+  try { return JSON.parse(localStorage.getItem(GUEST_FAVORITES_KEY) || '[]').map(String); } catch { return []; }
+}
+function saveGuestFavorites(items) {
+  try { localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify([...items])); } catch {}
+}
 
 const state = {
   q: '',
@@ -2708,7 +2714,7 @@ const state = {
   verifiedOnly: false,
   sort: 'featured',
   price: 'all',
-  favorites: new Set(FAVORITE_IDS),
+  favorites: new Set(IS_AUTHENTICATED ? FAVORITE_IDS : loadGuestFavorites()),
   featuredLimit: 8,
   newestLimit: 8,
 };
@@ -2765,6 +2771,41 @@ function toast(msg, error = false) {
   t.style.opacity = '1';
   clearTimeout(window.__jrToastTimer);
   window.__jrToastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2400);
+}
+function openReportModal(onSubmit) {
+  let modal = document.getElementById('reportFormModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'reportFormModal';
+    modal.className = 'modalBack';
+    modal.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Report listing" style="max-width:520px">
+        <div class="modalTop"><b>Report listing</b><button class="modalClose" type="button" data-report-close aria-label="Close">×</button></div>
+        <form id="reportFormClean" style="display:grid;gap:12px;padding:16px">
+          <select class="input" name="reason" required>
+            <option value="inaccurate">Inaccurate information</option>
+            <option value="wrong-price">Wrong price</option>
+            <option value="suspicious">Suspicious listing</option>
+            <option value="unavailable">No longer available</option>
+          </select>
+          <textarea class="input" name="details" rows="4" placeholder="Add helpful details"></textarea>
+          <button class="btn primary" type="submit">Submit report</button>
+        </form>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-report-close]')) modal.classList.remove('open');
+    });
+  }
+  const form = modal.querySelector('#reportFormClean');
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(form).entries());
+    modal.classList.remove('open');
+    onSubmit(payload);
+    form.reset();
+  };
+  modal.classList.add('open');
 }
 function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -2933,8 +2974,12 @@ function render() {
 
 async function toggleFavorite(id) {
   if (!IS_AUTHENTICATED) {
-    toast('Please log in to save favorites.', true);
-    setTimeout(() => { window.location.href = LOGIN_URL; }, 500);
+    if (state.favorites.has(id)) state.favorites.delete(id);
+    else state.favorites.add(id);
+    saveGuestFavorites(state.favorites);
+    render();
+    syncModalFav();
+    toast(state.favorites.has(id) ? 'Saved to this browser.' : 'Removed from saved listings.');
     return;
   }
   try {
@@ -3050,44 +3095,24 @@ el('modalFav').addEventListener('click', () => { if (!currentModalId) return; to
 async function sendInquiryFromModal() {
   if (!currentModalId) return;
   const item = LISTINGS.find((x) => x.id === currentModalId);
-  const message = window.prompt(`Send an inquiry for "${item?.title || 'this listing'}"`, 'Hello, I am interested in this listing. Is it still available?');
-  if (!message) return;
-  let name = ''; let email = ''; let phone = '';
-  if (!IS_AUTHENTICATED) {
-    name = window.prompt('Your name', '') || '';
-    email = window.prompt('Your email (optional)', '') || '';
-    phone = window.prompt('Your phone (optional)', '') || '';
-  }
-  try {
-    const res = await fetch(`/api/inquiries/listing/${currentModalId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ name, email, phone, message })
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || 'Could not send inquiry');
-    toast(data.message || 'Inquiry sent successfully');
-  } catch (err) {
-    toast(err.message || 'Could not send inquiry right now.', true);
-  }
+  if (item?.url) window.location.href = item.url;
 }
 async function reportCurrentListing() {
   if (!currentModalId) return;
-  const reason = window.prompt('Reason for reporting this listing', 'Suspicious or inaccurate information');
-  if (!reason) return;
-  const details = window.prompt('More details (optional)', '') || '';
-  try {
-    const res = await fetch(`/api/reports/listing/${currentModalId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ reason, details })
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || 'Could not submit report');
-    toast(data.message || 'Report submitted');
-  } catch (err) {
-    toast(err.message || 'Could not submit report.', true);
-  }
+  openReportModal(async ({ reason, details }) => {
+    try {
+      const res = await fetch(`/api/reports/listing/${currentModalId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ reason, details })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Could not submit report');
+      toast(data.message || 'Report submitted');
+    } catch (err) {
+      toast(err.message || 'Could not submit report.', true);
+    }
+  });
 }
 el('contactBtn').addEventListener('click', () => {
   const item = LISTINGS.find((x) => x.id === currentModalId); if (item) window.location.href = item.url;

@@ -45,6 +45,17 @@
         <p class="muted">Listings left: <strong><%= rem.listings === Infinity ? 'Unlimited' : rem.listings %></strong> • Featured slots left: <strong><%= rem.featured === Infinity ? 'Unlimited' : rem.featured %></strong>. Upgrade or manage monetization in <a href="/dashboard/billing">Billing</a>.</p>
       </section>
 
+      <% if (listing?.monetization?.postingFeeRequired && listing?.monetization?.postingFeeStatus !== 'paid') { %>
+        <section class="page-banner" style="margin:0 0 16px">
+          <h3>Landlord posting fee due</h3>
+          <p class="muted">Pay <strong><%= listing.monetization.postingFeeCurrency || 'UGX' %> <%= Number(listing.monetization.postingFeeAmount || 0).toLocaleString() %></strong> to publish this asset.</p>
+          <form method="post" action="/listings/<%= listing._id %>/posting-fee" style="margin-top:12px">
+            <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
+            <button class="btn" type="submit">Pay posting fee</button>
+          </form>
+        </section>
+      <% } %>
+
       <form class="tableCard dashboardFormCard listingWizardForm" action="/listings/<%= listing._id %>/update?<%= csrfToken ? `_csrf=${encodeURIComponent(csrfToken)}` : "" %>" method="post" enctype="multipart/form-data" id="listingWizardForm" data-autosave-key="classic-edit-listing-<%= listing._id %>" novalidate>
         <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
 
@@ -140,24 +151,34 @@
           </div>
 
           <div class="formGrid autoFit">
-            <label>Bedrooms
+            <label data-category-group="house apartment shortstay">Bedrooms
               <input class="input" type="number" name="bedrooms" value="<%= val('bedrooms', specs.bedrooms || '') %>">
             </label>
-            <label>Bathrooms
+            <label data-category-group="house apartment shortstay office shop warehouse">Bathrooms
               <input class="input" type="number" name="bathrooms" value="<%= val('bathrooms', specs.bathrooms || '') %>">
             </label>
-            <label>Size sqm
+            <label data-category-group="house apartment shortstay office shop warehouse">Size sqm
               <input class="input" type="number" name="sizeSqm" value="<%= val('sizeSqm', specs.sizeSqm || '') %>">
             </label>
-            <label>Year
+            <label data-category-group="land">Land size
+              <input class="input" type="number" name="landSize" value="<%= val('landSize', specs.landSize || '') %>">
+            </label>
+            <label data-category-group="car">Seats
+              <input class="input" type="number" name="seats" value="<%= val('seats', specs.seats || '') %>">
+            </label>
+            <label data-category-group="car">Year
               <input class="input" type="number" name="year" value="<%= val('year', specs.year || '') %>">
             </label>
-            <label>Fuel type
+            <label data-category-group="car">Mileage
+              <input class="input" type="number" name="mileage" value="<%= val('mileage', specs.mileage || '') %>">
+            </label>
+            <label data-category-group="car">Fuel type
               <input class="input" name="fuelType" value="<%= val('fuelType', specs.fuelType || '') %>">
             </label>
-            <label>Transmission
+            <label data-category-group="car">Transmission
               <input class="input" name="transmission" value="<%= val('transmission', specs.transmission || '') %>">
             </label>
+            <label class="checkLine" data-category-group="house apartment shortstay" style="align-self:end"><input type="checkbox" name="furnished" value="true" <%= val('furnished', specs.furnished ? 'true' : '') ? 'checked' : '' %>> Furnished</label>
             <label>Amenities
               <input class="input" name="amenities" value="<%= val('amenities', amenityText) %>" placeholder="Parking, Wi-Fi, security, garden...">
             </label>
@@ -210,9 +231,15 @@
                 </label>
                 <label>Lead access
                   <select class="input" name="leadAccess">
-                    <option value="open" <%= val('leadAccess', listing?.monetization?.leadAccess || 'open')==='open' ? 'selected' : '' %>>Open inquiries</option>
-                    <option value="paid" <%= val('leadAccess', listing?.monetization?.leadAccess || 'open')==='paid' ? 'selected' : '' %>>Paid / qualified leads</option>
+                    <option value="paid" <%= val('leadAccess', listing?.monetization?.leadAccess || 'paid')==='paid' ? 'selected' : '' %>>Paid contact unlock</option>
+                    <option value="open" <%= val('leadAccess', listing?.monetization?.leadAccess || 'paid')==='open' ? 'selected' : '' %>>Open inquiries</option>
                   </select>
+                </label>
+                <label>Contact unlock fee
+                  <input class="input" type="number" min="0" step="0.01" name="contactFeeAmount" value="<%= val('contactFeeAmount', listing?.monetization?.contactFeeAmount || '5') %>">
+                </label>
+                <label>Contact fee currency
+                  <input class="input" name="contactFeeCurrency" value="<%= val('contactFeeCurrency', listing?.monetization?.contactFeeCurrency || listing?.price?.currency || 'USD') %>">
                 </label>
                 <label class="checkLine" style="align-self:end"><input type="checkbox" name="useFeaturedSlot" value="true" <%= val('useFeaturedSlot', listing?.monetization?.featuredRequested ? 'true' : '') ? 'checked' : '' %> <%= (rem.featured === 0 && !(listing?.featured)) ? '' : '' %>> Use featured slot</label>
                 <label class="checkLine" style="align-self:end"><input type="checkbox" name="verificationRequested" value="true" <%= val('verificationRequested', listing?.monetization?.verificationRequested ? 'true' : '') ? 'checked' : '' %>> Request paid verification badge</label>
@@ -256,7 +283,7 @@
                       <% if (!img.isPrimary) { %>
                         <button class="tinyBtn" type="submit" form="make-primary-<%= img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>">Make primary</button>
                       <% } %>
-                      <button class="tinyBtn" type="submit" form="delete-image-<%= img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>" onclick="return confirm('Remove this image?')">Delete image</button>
+                      <button class="tinyBtn" type="submit" form="delete-image-<%= img._id || img.publicId.replace(/[^a-zA-Z0-9_-]/g, '') %>" data-confirm-message="Remove this image?">Delete image</button>
                     </div>
                   </figcaption>
                 </figure>
@@ -305,7 +332,6 @@
           <% if (!img.isPrimary) { %>
             <form id="make-primary-<%= safeImgId %>" action="/listings/images/primary" method="post" style="display:none">
               <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
-              <input type="hidden" name="listingId" value="<%= listing._id %>">
               <input type="hidden" name="listingId" value="<%= listing._id %>">
             <input type="hidden" name="publicId" value="<%= img.publicId %>">
             </form>

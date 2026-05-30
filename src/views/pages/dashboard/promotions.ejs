@@ -1,0 +1,41 @@
+<%- include('../../partials/head', { title }) %>
+<div class="app" id="appShell">
+  <%- include('../../partials/dashboard-sidebar') %>
+  <main class="main">
+    <section class="topbar">
+      <div class="topbar-left">
+        <div class="page-title"><h2>Promotions</h2><p>Listings you shared and the commission they have earned.</p></div>
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      </div>
+      <div class="topbar-right"><button class="theme-btn" id="themeBtn" type="button">●</button></div>
+    </section>
+
+    <section class="metric-strip compact-metrics">
+      <div class="metric-box"><h5><%= promotions.length %></h5><p>Promoted items</p></div>
+      <div class="metric-box"><h5><%= promotions.reduce((sum, item) => sum + Number(item.clicks || 0), 0).toLocaleString() %></h5><p>Clicks</p></div>
+      <div class="metric-box"><h5><%= promotions.reduce((sum, item) => sum + Number(item.conversions || 0), 0).toLocaleString() %></h5><p>Paid conversions</p></div>
+      <div class="metric-box"><h5><%= promotions[0]?.earnedCurrency || 'UGX' %> <%= promotions.reduce((sum, item) => sum + Number(item.earnedAmount || 0), 0).toLocaleString() %></h5><p>Estimated earnings</p></div>
+    </section>
+
+    <section class="card">
+      <div class="table-shell">
+        <table>
+          <thead><tr><th>Listing</th><th>Clicks</th><th>Conversions</th><th>Earnings</th><th>Link</th></tr></thead>
+          <tbody>
+            <% promotions.forEach((item) => { %>
+              <tr>
+                <td><strong><%= item.listing?.title || 'Listing removed' %></strong><br><span class="muted"><%= item.listing?.category || '-' %></span></td>
+                <td><%= Number(item.clicks || 0).toLocaleString() %></td>
+                <td><%= Number(item.conversions || 0).toLocaleString() %></td>
+                <td><%= item.earnedCurrency || 'UGX' %> <%= Number(item.earnedAmount || 0).toLocaleString() %></td>
+                <td><a class="tiny-btn" href="/p/<%= item.token %>" target="_blank" rel="noopener">Open share link</a></td>
+              </tr>
+            <% }) %>
+            <% if (!promotions.length) { %><tr><td colspan="5">No promoted items yet. Open a listing and use Promote to get your share link.</td></tr><% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+</body></html>

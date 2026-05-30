@@ -2,11 +2,23 @@ const Listing = require('../../models/Listing');
 const Favorite = require('../../models/Favorite');
 const Inquiry = require('../../models/Inquiry');
 const Review = require('../../models/Review');
+const Report = require('../../models/Report');
+const Promotion = require('../../models/Promotion');
 const AuditLog = require('../../models/AuditLog');
 const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
 const { getPagination } = require('../../utils/pagination');
+const { validateListingPayload } = require('../../utils/validators');
 const { uploadManyToCloudinary, deleteManyFromCloudinary } = require('../../services/mediaService');
+const { getMonetizationContext } = require('../../services/monetizationService');
+const { getPostingFeeSnapshot } = require('../../services/revenueShareService');
+const { createListingPostingCheckout } = require('../../services/listingPaymentService');
+const {
+  getContactAccess,
+  getContactParties,
+  sanitizeListingContacts,
+  isObjectId,
+} = require('../../services/contactAccessService');
 
 function buildListingFilters(query = {}) {
   const filter = {};
@@ -71,6 +83,14 @@ function parseAmenities(value) {
   return String(value || '').split(',').map((v) => v.trim()).filter(Boolean);
 }
 
+function publicUserSelect() {
+  return 'firstName lastName role avatar';
+}
+
+function privateUserSelect() {
+  return 'firstName lastName phone email avatar role';
+}
+
 function applyUploadedMedia(listing, uploads = []) {
   const imageUploads = uploads.filter((item) => item.resource_type !== 'video');
   const videoUploads = uploads.filter((item) => item.resource_type === 'video');
@@ -99,6 +119,15 @@ function applyUploadedMedia(listing, uploads = []) {
 
 exports.createListing = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
+  const validation = validateListingPayload(req.body);
+  if (!validation.ok) {
+    throw new ApiError(422, 'Listing validation failed', validation.errors);
+  }
+  const monetizationContext = await getMonetizationContext(req.user);
+  const postingFee = getPostingFeeSnapshot(req.user);
+  if (monetizationContext.remaining.listings !== Infinity && monetizationContext.remaining.listings <= 0) {
+    throw new ApiError(402, `Your ${monetizationContext.entitlements.planName} plan has reached its listing limit. Upgrade billing to publish more listings.`);
+  }
 
   const payload = {
     title: req.body.title,
@@ -139,13 +168,35 @@ exports.createListing = asyncHandler(async (req, res) => {
       availableFrom: req.body.availableFrom ? new Date(req.body.availableFrom) : undefined,
       expectedVacateAt: req.body.expectedVacateAt ? new Date(req.body.expectedVacateAt) : undefined,
     },
+    monetization: {
+      tier: ['free', 'standard', 'premium'].includes(String(req.body.tier || '').toLowerCase()) ? String(req.body.tier).toLowerCase() : 'free',
+      featuredRequested: req.body.useFeaturedSlot === 'true' || req.body.useFeaturedSlot === 'on',
+      verificationRequested: req.body.verificationRequested === 'true' || req.body.verificationRequested === 'on',
+      viewingFeeEnabled: req.body.viewingFeeEnabled === 'true' || req.body.viewingFeeEnabled === 'on',
+      viewingFeeAmount: req.body.viewingFeeAmount ? Number(req.body.viewingFeeAmount) : 0,
+      viewingFeeCurrency: req.body.viewingFeeCurrency || req.body.currency || 'USD',
+      reservationFeeEnabled: req.body.reservationFeeEnabled === 'true' || req.body.reservationFeeEnabled === 'on',
+      reservationFeeAmount: req.body.reservationFeeAmount ? Number(req.body.reservationFeeAmount) : 0,
+      reservationFeeCurrency: req.body.reservationFeeCurrency || req.body.currency || 'USD',
+      leadAccess: req.body.leadAccess === 'open' ? 'open' : 'paid',
+      contactFeeAmount: req.body.contactFeeAmount ? Number(req.body.contactFeeAmount) : 5,
+      contactFeeCurrency: req.body.contactFeeCurrency || req.body.currency || 'USD',
+      ...postingFee,
+      planSnapshot: monetizationContext.entitlements.planSlug || 'free',
+      lastMonetizedAt: new Date(),
+    },
     owner: ownerId,
     assignedAgent: req.user.role === 'agent' ? ownerId : (req.body.assignedAgent || undefined),
-    status: 'published',
+    status: postingFee.postingFeeRequired ? 'pending' : 'published',
     verified: ['admin', 'super-admin'].includes(req.user.role) ? req.body.verified === 'true' : false,
     featured: ['admin', 'super-admin'].includes(req.user.role) ? req.body.featured === 'true' : false,
-    publishedAt: new Date(),
+    publishedAt: postingFee.postingFeeRequired ? undefined : new Date(),
   };
+
+  if (!['admin', 'super-admin'].includes(req.user.role)) {
+    const requestedFeatured = payload.monetization?.featuredRequested;
+    payload.featured = Boolean(requestedFeatured && (monetizationContext.remaining.featured === Infinity || monetizationContext.remaining.featured > 0));
+  }
 
   const listing = await Listing.create(payload);
 
@@ -163,6 +214,25 @@ exports.createListing = asyncHandler(async (req, res) => {
     meta: { title: listing.title, category: listing.category },
   });
 
+  if (listing.monetization?.postingFeeRequired && listing.monetization?.postingFeeStatus === 'pending') {
+    try {
+      const checkout = await createListingPostingCheckout({ user: req.user, listing });
+      return res.status(201).json({
+        success: true,
+        message: 'Listing created. Continue to posting fee payment.',
+        data: listing,
+        meta: { paymentRequired: true, redirectUrl: checkout.redirectUrl, paymentId: checkout.payment?._id },
+      });
+    } catch (error) {
+      return res.status(201).json({
+        success: true,
+        message: `${error.message} Listing saved as pending until the landlord posting fee is paid.`,
+        data: listing,
+        meta: { paymentRequired: true },
+      });
+    }
+  }
+
   res.status(201).json({ success: true, message: 'Listing created successfully', data: listing });
 });
 
@@ -173,8 +243,8 @@ exports.getListings = asyncHandler(async (req, res) => {
 
   const [items, total] = await Promise.all([
     Listing.find(filter)
-      .populate('owner', 'firstName lastName phone email role avatar')
-      .populate('assignedAgent', 'firstName lastName phone email avatar')
+      .populate('owner', publicUserSelect())
+      .populate('assignedAgent', publicUserSelect())
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -205,14 +275,18 @@ exports.getListings = asyncHandler(async (req, res) => {
 });
 
 exports.getListingBySlug = asyncHandler(async (req, res) => {
-  const listing = await Listing.findOne({ slug: req.params.slug })
-    .populate('owner', 'firstName lastName phone email avatar role')
-    .populate('assignedAgent', 'firstName lastName phone email avatar role');
+  const lookup = isObjectId(req.params.slug)
+    ? { $or: [{ slug: req.params.slug }, { _id: req.params.slug }] }
+    : { slug: req.params.slug };
+  const listing = await Listing.findOne(lookup)
+    .populate('owner', privateUserSelect())
+    .populate('assignedAgent', privateUserSelect());
 
   if (!listing) throw new ApiError(404, 'Listing not found');
 
   const canViewPrivate = req.user && (
     String(req.user._id) === String(listing.owner?._id) ||
+    String(req.user._id) === String(listing.assignedAgent?._id) ||
     ['admin', 'super-admin'].includes(req.user.role)
   );
 
@@ -228,14 +302,56 @@ exports.getListingBySlug = asyncHandler(async (req, res) => {
     Review.find({ listing: listing._id, status: 'published' }).populate('user', 'firstName lastName avatar').sort({ createdAt: -1 }).limit(5).lean(),
     req.user ? Favorite.exists({ user: req.user._id, listing: listing._id }) : false,
   ]);
+  const contactAccess = await getContactAccess({ user: req.user, listing, accessTokens: req.signedCookies?.cr_contact_access });
+  const listingData = sanitizeListingContacts(listing.toObject());
 
   res.json({
     success: true,
     data: {
-      ...listing.toObject(),
+      ...listingData,
       inquiryCount,
       reviews,
       isFavorite: Boolean(isFavorite),
+      contactAccess: {
+        hasAccess: contactAccess.hasAccess,
+        reason: contactAccess.reason,
+        policy: contactAccess.policy,
+      },
+      contactParties: getContactParties(listing, contactAccess.hasAccess),
+    },
+  });
+});
+
+exports.getListingContact = asyncHandler(async (req, res) => {
+  const lookup = isObjectId(req.params.id)
+    ? { $or: [{ _id: req.params.id }, { slug: req.params.id }] }
+    : { slug: req.params.id };
+  const listing = await Listing.findOne(lookup)
+    .populate('owner', privateUserSelect())
+    .populate('assignedAgent', privateUserSelect());
+
+  if (!listing || listing.status !== 'published') throw new ApiError(404, 'Listing not found');
+
+  const contactAccess = await getContactAccess({ user: req.user, listing, accessTokens: req.signedCookies?.cr_contact_access });
+  if (!contactAccess.hasAccess) {
+    return res.status(402).json({
+      success: false,
+      message: 'Payment is required to unlock contact details.',
+      code: 'PAYMENT_REQUIRED',
+      data: { policy: contactAccess.policy },
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: {
+      listing: { _id: listing._id, slug: listing.slug, title: listing.title },
+      contactParties: getContactParties(listing, true),
+      contactAccess: {
+        hasAccess: true,
+        reason: contactAccess.reason,
+        policy: contactAccess.policy,
+      },
     },
   });
 });
@@ -286,6 +402,23 @@ exports.updateListing = asyncHandler(async (req, res) => {
   if (typeof req.body.availableFrom !== 'undefined') listing.apartmentIntel.availableFrom = req.body.availableFrom ? new Date(req.body.availableFrom) : undefined;
   if (typeof req.body.expectedVacateAt !== 'undefined') listing.apartmentIntel.expectedVacateAt = req.body.expectedVacateAt ? new Date(req.body.expectedVacateAt) : undefined;
 
+  if (!listing.monetization) listing.monetization = {};
+  if (typeof req.body.tier !== 'undefined') {
+    listing.monetization.tier = ['free', 'standard', 'premium'].includes(String(req.body.tier).toLowerCase()) ? String(req.body.tier).toLowerCase() : listing.monetization.tier;
+  }
+  if (typeof req.body.useFeaturedSlot !== 'undefined') listing.monetization.featuredRequested = req.body.useFeaturedSlot === 'true' || req.body.useFeaturedSlot === 'on';
+  if (typeof req.body.verificationRequested !== 'undefined') listing.monetization.verificationRequested = req.body.verificationRequested === 'true' || req.body.verificationRequested === 'on';
+  if (typeof req.body.viewingFeeEnabled !== 'undefined') listing.monetization.viewingFeeEnabled = req.body.viewingFeeEnabled === 'true' || req.body.viewingFeeEnabled === 'on';
+  if (typeof req.body.viewingFeeAmount !== 'undefined') listing.monetization.viewingFeeAmount = req.body.viewingFeeAmount ? Number(req.body.viewingFeeAmount) : 0;
+  if (typeof req.body.viewingFeeCurrency !== 'undefined') listing.monetization.viewingFeeCurrency = req.body.viewingFeeCurrency || listing.price?.currency || 'USD';
+  if (typeof req.body.reservationFeeEnabled !== 'undefined') listing.monetization.reservationFeeEnabled = req.body.reservationFeeEnabled === 'true' || req.body.reservationFeeEnabled === 'on';
+  if (typeof req.body.reservationFeeAmount !== 'undefined') listing.monetization.reservationFeeAmount = req.body.reservationFeeAmount ? Number(req.body.reservationFeeAmount) : 0;
+  if (typeof req.body.reservationFeeCurrency !== 'undefined') listing.monetization.reservationFeeCurrency = req.body.reservationFeeCurrency || listing.price?.currency || 'USD';
+  if (typeof req.body.leadAccess !== 'undefined') listing.monetization.leadAccess = req.body.leadAccess === 'open' ? 'open' : 'paid';
+  if (typeof req.body.contactFeeAmount !== 'undefined') listing.monetization.contactFeeAmount = req.body.contactFeeAmount ? Number(req.body.contactFeeAmount) : 5;
+  if (typeof req.body.contactFeeCurrency !== 'undefined') listing.monetization.contactFeeCurrency = req.body.contactFeeCurrency || listing.price?.currency || 'USD';
+  listing.monetization.lastMonetizedAt = new Date();
+
   if (['admin', 'super-admin'].includes(req.user.role)) {
     if (typeof req.body.featured !== 'undefined') listing.featured = req.body.featured === 'true';
     if (typeof req.body.verified !== 'undefined') listing.verified = req.body.verified === 'true';
@@ -329,6 +462,8 @@ exports.deleteListing = asyncHandler(async (req, res) => {
     Favorite.deleteMany({ listing: listing._id }),
     Inquiry.deleteMany({ listing: listing._id }),
     Review.deleteMany({ listing: listing._id }),
+    Report.deleteMany({ listing: listing._id }),
+    Promotion.deleteMany({ listing: listing._id }),
     listing.deleteOne(),
     AuditLog.create({
       actor: req.user._id,

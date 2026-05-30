@@ -10,6 +10,7 @@ const dashboardRoutes = require('./dashboard');
 const userRoutes = require('./users');
 const billingRoutes = require('./billing');
 const paymentRoutes = require('./payments');
+const promotionRoutes = require('./promotions');
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 router.use('/billing', billingRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/promotions', promotionRoutes);
 
 module.exports = router;

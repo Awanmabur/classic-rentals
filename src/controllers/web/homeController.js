@@ -65,8 +65,6 @@ function normalizeListing(listing) {
       name: [agent.firstName, agent.lastName].filter(Boolean).join(' ') || agent.email || 'Classic Rentals Agent',
       verified: Boolean(listing.verified),
       responseMins: 8,
-      email: agent.email || '',
-      phone: agent.phone || '',
     },
     images: (listing.images || []).map((img) => img.url),
     desc: listing.description,
@@ -76,8 +74,8 @@ function normalizeListing(listing) {
 
 exports.index = asyncHandler(async (req, res) => {
   const listingsRaw = await Listing.find({ status: 'published' })
-    .populate('owner', 'firstName lastName email phone')
-    .populate('assignedAgent', 'firstName lastName email phone')
+    .populate('owner', 'firstName lastName')
+    .populate('assignedAgent', 'firstName lastName')
     .sort({ featured: -1, createdAt: -1 })
     .limit(120)
     .lean();

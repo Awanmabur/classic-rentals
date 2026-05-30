@@ -11,6 +11,7 @@ router.post('/create', authenticateRequired, upload.array('images', 12), control
 router.get('/manage', authenticateRequired, controller.manageMine);
 router.get('/:slug/edit', authenticateRequired, controller.showEdit);
 router.post('/:id/update', authenticateRequired, upload.array('images', 12), controller.updateAction);
+router.post('/:id/posting-fee', authenticateRequired, controller.startPostingFeeAction);
 // Image action routes must come before generic ':id/delete' so '/images/delete' is not captured as id='images'.
 router.post('/images/primary', authenticateRequired, controller.setPrimaryImageAction);
 router.post('/images/delete', authenticateRequired, controller.removeImageAction);

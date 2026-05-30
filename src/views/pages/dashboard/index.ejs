@@ -308,11 +308,12 @@
         <a class="nav-link" href="/dashboard/manage-listings" data-label="Listings"><span class="nav-icon">▣</span><span class="nav-label">Listings</span></a>
         <a class="nav-link" href="/dashboard/inquiries" data-label="Inquiries"><span class="nav-icon">✉</span><span class="nav-label">Inquiries</span></a>
         <a class="nav-link" href="/dashboard/reviews" data-label="Reviews"><span class="nav-icon">★</span><span class="nav-label">Reviews</span></a>
+        <a class="nav-link" href="/dashboard/promotions" data-label="Promotions"><span class="nav-icon">↗</span><span class="nav-label">Promotions</span></a>
         <a class="nav-link" href="/dashboard/profile" data-label="Profile"><span class="nav-icon">☺</span><span class="nav-label">Profile</span></a>
         <% if (currentUser.role === 'user') { %>
           <a class="nav-link" href="/dashboard/favorites" data-label="Favorites"><span class="nav-icon">♥</span><span class="nav-label">Favorites</span></a>
         <% } %>
-        <% if (['agent','admin','super-admin'].includes(currentUser.role)) { %>
+        <% if (['user','agent','admin','super-admin'].includes(currentUser.role)) { %>
           <a class="nav-link" href="/listings/create" data-label="Create Listing"><span class="nav-icon">＋</span><span class="nav-label">Create Listing</span></a>
         <% } %>
       </div>
@@ -362,7 +363,7 @@
           <a class="icon-btn" title="Alerts" href="/dashboard/inquiries">🔔<% if (totalAlerts > 0) { %><span class="dot"></span><% } %></a>
           <button class="theme-btn" id="themeBtn" title="Toggle dark mode" type="button">◐</button>
           <a class="ghost-btn" href="/dashboard/analytics">Analytics</a>
-          <% if (['agent','admin','super-admin'].includes(currentUser.role)) { %>
+          <% if (['user','agent','admin','super-admin'].includes(currentUser.role)) { %>
             <a class="primary-btn" href="/listings/create">+ Add Listing</a>
           <% } else { %>
             <a class="primary-btn" href="/listings">Browse Listings</a>

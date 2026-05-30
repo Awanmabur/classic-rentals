@@ -486,6 +486,21 @@
             display: flex
         }
 
+        .modalBack {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .58);
+            display: none;
+            z-index: 220;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modalBack.open {
+            display: flex
+        }
+
         .drawer {
             position: relative;
             width: min(430px, 100%);
@@ -512,7 +527,8 @@
             border-color: rgba(15, 23, 42, .08);
         }
 
-        .drawerBack.open .drawer {
+        .drawerBack.open .drawer,
+        .modalBack.open .drawer {
             transform: translateY(0) scale(1);
             opacity: 1;
         }
@@ -1988,9 +2004,13 @@
 const images = listing.images && listing.images.length ? listing.images : [{ url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1400&auto=format&fit=crop' }];
 const primaryImageObj = images.find(img => img.isPrimary) || images[0];
 const primaryImage = primaryImageObj?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1400&auto=format&fit=crop';
-const ownerName = listing.owner ? [listing.owner.firstName, listing.owner.lastName].filter(Boolean).join(' ') : 'Owner';
-const ownerPhone = listing.owner?.phone || '+256 781 977 217';
-const ownerEmail = listing.owner?.email || 'info@classicrentals.example';
+const parties = Array.isArray(contactParties) && contactParties.length ? contactParties : [];
+const primaryContact = parties[0] || { name: 'Listing contact', role: 'contact', phone: '', email: '', unlocked: false };
+const ownerName = primaryContact.name || 'Listing contact';
+const access = contactAccess || {};
+const policy = access.policy || {};
+const fee = policy.fee || {};
+const contactFeeLabel = fee.amount ? `${fee.currency || 'USD'} ${Number(fee.amount || 0).toLocaleString()}` : 'payment';
 const priceCurrency = listing.price?.currency || 'USD';
 const priceAmount = Number(listing.price?.amount || 0).toLocaleString();
 const priceUnit = listing.price?.unit === 'one-time' ? 'One time' : '/' + (listing.price?.unit || 'month');
@@ -2003,7 +2023,7 @@ const vacateIso = intel.expectedVacateAt ? new Date(intel.expectedVacateAt).toIS
 .showWrap{padding:22px 0 34px}.showShell{display:grid;grid-template-columns:minmax(0,1.45fr) 360px;gap:16px;align-items:start}.showMain,.showAside{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:none;-webkit-backdrop-filter:none}
 .showMain{overflow:hidden}.showMedia{padding:12px}.showMedia img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:22px}.showThumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;padding:0 12px 12px}.showThumbs button{padding:0;border:0;background:transparent;cursor:pointer}.showThumbs img{width:100%;height:74px;object-fit:cover;border-radius:16px;border:1px solid transparent;transition:.2s var(--ease)}.showThumbs button.active img,.showThumbs button:hover img{border-color:color-mix(in oklab,var(--primary) 70%, white 8%);transform:translateY(-2px)}
 .showBody{padding:6px 18px 20px}.showBadgeRow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}.showBadge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:12px;font-weight:700}.showBadge.ok{color:#f7d58a}.showBadge.feat{color:#f3c56d}.showTitle{font-size:clamp(1.6rem,2vw,2.25rem);line-height:1.1;margin:0 0 8px}.showLocation{color:var(--muted);margin:0 0 10px;font-size:14px}.showPrice{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:0 0 14px}.showPrice strong{font-size:1.55rem;line-height:1}.showPrice span{color:var(--muted);font-size:14px;padding-bottom:2px}.showMeta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}.showMeta span,.showAmenity{display:inline-flex;align-items:center;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:13px}.showDesc{font-size:14px;line-height:1.8;color:var(--text);margin:0 0 18px}.showSubhead{font-size:1rem;margin:0 0 12px}.showAmenities{display:flex;flex-wrap:wrap;gap:8px}
-.showAside{padding:18px;position:sticky;top:110px}.ownerCard{display:flex;align-items:center;gap:12px;margin-bottom:14px}.ownerAvatar{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(180deg,var(--primary),var(--primary2));color:white;font-weight:800;box-shadow:0 12px 30px rgba(205, 119, 0,.35)}.ownerMeta strong{display:block;font-size:15px}.ownerMeta span{display:block;font-size:13px;color:var(--muted);margin-top:3px}.contactRows{display:grid;gap:10px;margin:14px 0 16px}.contactRow{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.04)}.contactRow small{font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}.contactRow b{font-size:14px;word-break:break-word}.showForm{display:grid;gap:10px}.showForm .input{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);border-radius:16px;padding:13px 14px;outline:none}.showForm textarea.input{min-height:128px;resize:vertical}.showForm .input:focus{border-color:color-mix(in oklab,var(--primary) 68%, white 10%);box-shadow:0 0 0 4px rgba(205, 119, 0,.12)}.showAside .btn{width:100%;justify-content:center}.showActions{display:grid;gap:10px;margin-top:10px}.crumbs{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px}.crumbs a:hover{text-decoration:underline}.showNotice{padding:12px 14px;border-radius:16px;background:rgba(205, 119, 0,.10);border:1px solid rgba(205, 119, 0,.22);font-size:13px;color:var(--muted);margin-top:14px}
+.showAside{padding:18px;position:sticky;top:110px}.ownerCard{display:flex;align-items:center;gap:12px;margin-bottom:14px}.ownerAvatar{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(180deg,var(--primary),var(--primary2));color:white;font-weight:800;box-shadow:0 12px 30px rgba(205, 119, 0,.35)}.ownerMeta strong{display:block;font-size:15px}.ownerMeta span{display:block;font-size:13px;color:var(--muted);margin-top:3px}.contactRows{display:grid;gap:10px;margin:14px 0 16px}.contactRow{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.04)}.contactRow small{font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}.contactRow b{font-size:14px;word-break:break-word}.contactUnlock{display:grid;gap:8px;margin:0 0 14px;padding:14px;border-radius:16px;border:1px solid rgba(205,119,0,.24);background:rgba(205,119,0,.10);font-size:13px;color:var(--muted)}.contactUnlock strong{color:var(--text);font-size:14px}.showForm{display:grid;gap:10px}.showForm .input{width:100%;border:1px solid var(--line);background:var(--input-bg);color:var(--text);border-radius:16px;padding:13px 14px;outline:none}.showForm textarea.input{min-height:128px;resize:vertical}.showForm .input:focus{border-color:color-mix(in oklab,var(--primary) 68%, white 10%);box-shadow:0 0 0 4px rgba(205, 119, 0,.12)}.showAside .btn{width:100%;justify-content:center}.showActions{display:grid;gap:10px;margin-top:10px}.crumbs{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px}.crumbs a:hover{text-decoration:underline}.showNotice{padding:12px 14px;border-radius:16px;background:rgba(205, 119, 0,.10);border:1px solid rgba(205, 119, 0,.22);font-size:13px;color:var(--muted);margin-top:14px}
 .intelGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}.intelCard{border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.04);padding:12px;display:grid;gap:5px}.intelCard small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.intelCard strong{font-size:14px}.roomVideo{margin-top:18px}.roomVideo video{width:100%;border-radius:18px;border:1px solid var(--line);background:#000}.converterBox{display:grid;gap:12px;margin:14px 0;padding:14px;border-radius:16px;border:1px solid rgba(205,119,0,.18);background:linear-gradient(180deg,rgba(205,119,0,.10),rgba(255,255,255,.035))}.converterHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}.converterHead strong{font-size:15px}.converterAmount{display:block;color:var(--muted);font-size:12px;margin-top:3px}.converterControls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.converterBox select{min-height:40px}.converterResult{font-size:1.08rem;font-weight:900}.converterSource{color:var(--muted);font-size:12px;line-height:1.5}.mapGate{margin-top:14px}.mapFrame{width:100%;height:220px;border:0;border-radius:18px;filter:saturate(.92)}.countdownValue{font-weight:900;color:#f3c56d}
 @media (max-width:980px){.showShell{grid-template-columns:1fr}.showAside{position:static}}
 @media (max-width:640px){.showWrap{padding:16px 0 28px}.showMedia{padding:10px}.showMedia img{border-radius:18px;aspect-ratio:4/3}.showBody{padding:4px 14px 16px}.showPrice strong{font-size:1.3rem}.showThumbs{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0 10px 12px}.showThumbs img{height:62px;border-radius:14px}.showAside{padding:14px}.intelGrid,.converterControls{grid-template-columns:1fr}}
@@ -2101,18 +2121,40 @@ const vacateIso = intel.expectedVacateAt ? new Date(intel.expectedVacateAt).toIS
         </div>
 
         <div class="contactRows">
-          <div class="contactRow"><small>Phone</small><b><%= ownerPhone %></b></div>
-          <div class="contactRow"><small>Email</small><b><%= ownerEmail %></b></div>
+          <% parties.forEach((party) => { %>
+            <div class="contactRow">
+              <small><%= party.role === 'agent' ? 'Agent' : 'Landlord' %> contact</small>
+              <b><%= party.name %></b>
+              <span><%= party.phone || (access.hasAccess ? 'No phone added' : 'Phone hidden until payment') %></span>
+              <span><%= party.email || (access.hasAccess ? 'No email added' : 'Email hidden until payment') %></span>
+              <% if (party.whatsappUrl) { %><a class="tinyBtn" href="<%= party.whatsappUrl %>" target="_blank" rel="noopener">WhatsApp</a><% } %>
+            </div>
+          <% }) %>
           <div class="contactRow"><small>Listing type</small><b><%= [listing.category, listing.purpose].filter(Boolean).join(' • ') || 'Rental listing' %></b></div>
         </div>
 
+        <% if (!access.hasAccess && policy.requiresPayment) { %>
+          <form id="contactUnlockForm" class="showForm contactUnlock">
+            <strong>Unlock agent and landlord contacts</strong>
+            <span>Pay <%= contactFeeLabel %> once to reveal phone and email details for this listing.</span>
+            <input type="hidden" name="type" value="contact">
+            <input type="hidden" name="provider" value="pesapal">
+            <input class="input" name="name" placeholder="Your name" value="<%= currentUser ? [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') : '' %>" />
+            <input class="input" name="email" placeholder="Email" value="<%= currentUser ? currentUser.email : '' %>" />
+            <input class="input" name="phone" placeholder="Phone" value="<%= currentUser ? (currentUser.phone || '') : '' %>" />
+            <textarea class="input" name="message" placeholder="I want to unlock contact details for this listing.">I want to unlock contact details for this listing.</textarea>
+            <button class="btn primary" type="submit">Pay and unlock contacts</button>
+          </form>
+        <% } %>
+
         <form id="inquiryForm" class="showForm">
-          <input type="hidden" name="type" value="general">
+          <input type="hidden" name="type" value="<%= (!access.hasAccess && policy.requiresPayment) ? 'contact' : 'general' %>">
+          <% if (!access.hasAccess && policy.requiresPayment) { %><input type="hidden" name="provider" value="pesapal"><% } %>
           <input class="input" name="name" placeholder="Your name" value="<%= currentUser ? [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') : '' %>" />
           <input class="input" name="email" placeholder="Email" value="<%= currentUser ? currentUser.email : '' %>" />
           <input class="input" name="phone" placeholder="Phone" value="<%= currentUser ? (currentUser.phone || '') : '' %>" />
           <textarea class="input" name="message" placeholder="I am interested in this listing. Please share more details."></textarea>
-          <button class="btn primary" type="submit">Send inquiry</button>
+          <button class="btn primary" type="submit"><%= (!access.hasAccess && policy.requiresPayment) ? 'Pay and send inquiry' : 'Send inquiry' %></button>
         </form>
 
         <% if (monet.viewingFeeEnabled || monet.reservationFeeEnabled) { %>
@@ -2134,6 +2176,8 @@ const vacateIso = intel.expectedVacateAt ? new Date(intel.expectedVacateAt).toIS
 
         <div class="showActions">
           <button class="btn" type="button" data-favorite-id="<%= listing._id %>">Save listing</button>
+          <button class="btn" type="button" id="shareListingBtn">Share listing</button>
+          <% if (currentUser) { %><button class="btn" type="button" id="promoteListingBtn">Promote and earn 5%</button><% } %>
           <a class="btn" href="/listings">Back to listings</a>
         </div>
 
@@ -2233,6 +2277,10 @@ const vacateIso = intel.expectedVacateAt ? new Date(intel.expectedVacateAt).toIS
 
 
 <script>
+const IS_AUTHENTICATED = <%- JSON.stringify(Boolean(currentUser)) %>;
+const LISTING_ID = <%- JSON.stringify(String(listing._id)) %>;
+const LISTING_TITLE = <%- JSON.stringify(listing.title) %>;
+const GUEST_FAVORITES_KEY = 'classic-rentals-guest-favorites';
 const drawerBack = document.getElementById('drawerBack');
 function setTheme(theme){ document.documentElement.setAttribute('data-theme', theme); try{ localStorage.setItem('cr-theme', theme); }catch(_){} }
 (function(){ try{ const saved = localStorage.getItem('cr-theme'); if(saved) document.documentElement.setAttribute('data-theme', saved); }catch(_){} })();
@@ -2248,10 +2296,62 @@ document.getElementById('navSearchBtnDrawer')?.addEventListener('click', () => {
 for (const id of ['listBtn','footerList','drawerList']) { document.getElementById(id)?.addEventListener('click', () => location.href = '/listings/create'); }
 document.getElementById('footerExplore')?.addEventListener('click', () => location.href = '/listings');
 document.getElementById('supportBtn')?.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/#contact'; });
-document.getElementById('reportBtn')?.addEventListener('click', (e) => { e.preventDefault(); alert('Open the inquiry box to contact support about this listing.'); });
-document.getElementById('termsBtn')?.addEventListener('click', (e) => { e.preventDefault(); alert('Connect this to your terms page.'); });
+document.getElementById('reportBtn')?.addEventListener('click', (e) => { e.preventDefault(); notify('Open the inquiry box to contact support about this listing.'); });
+document.getElementById('termsBtn')?.addEventListener('click', (e) => { e.preventDefault(); notify('Terms and privacy page can be connected from the footer link.'); });
 document.getElementById('aboutBtn')?.addEventListener('click', (e) => { e.preventDefault(); location.href = '/'; });
 document.getElementById('year').textContent = new Date().getFullYear();
+
+function showCleanModal({ title = 'Classic Rentals', message = '', actions = [] }) {
+  let modal = document.getElementById('cleanActionModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'cleanActionModal';
+    modal.className = 'modalBack open';
+    modal.innerHTML = `
+      <div class="drawer" role="dialog" aria-modal="true" style="max-width:420px">
+        <div class="drawerTop"><b data-clean-title></b><button class="iconBtn" type="button" data-clean-close aria-label="Close">×</button></div>
+        <p class="muted" data-clean-message style="margin:0;line-height:1.6"></p>
+        <div class="drawerBottom" data-clean-actions></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal || event.target.closest('[data-clean-close]')) modal.classList.remove('open');
+    });
+  }
+  modal.querySelector('[data-clean-title]').textContent = title;
+  modal.querySelector('[data-clean-message]').textContent = message;
+  const actionWrap = modal.querySelector('[data-clean-actions]');
+  actionWrap.innerHTML = '';
+  actions.forEach((action) => {
+    const button = document.createElement(action.href ? 'a' : 'button');
+    button.className = action.primary ? 'btn primary' : 'btn';
+    button.textContent = action.label;
+    if (action.href) button.href = action.href;
+    else button.type = 'button';
+    button.addEventListener('click', () => {
+      if (action.onClick) action.onClick();
+      if (!action.keepOpen) modal.classList.remove('open');
+    });
+    actionWrap.appendChild(button);
+  });
+  modal.classList.add('open');
+}
+
+function notify(message, error = false) {
+  showCleanModal({
+    title: error ? 'Action needed' : 'Done',
+    message,
+    actions: [{ label: 'Close', primary: !error }],
+  });
+}
+
+function loadGuestFavorites() {
+  try { return new Set(JSON.parse(localStorage.getItem(GUEST_FAVORITES_KEY) || '[]').map(String)); } catch { return new Set(); }
+}
+
+function saveGuestFavorites(items) {
+  try { localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify([...items])); } catch {}
+}
 
 document.querySelectorAll('[data-image-src]').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -2341,7 +2441,7 @@ async function submitLeadRequest(form, fallbackMessage) {
     body: JSON.stringify(payload)
   });
   const data = await res.json();
-  alert(data.message || (data.success ? 'Request sent.' : fallbackMessage));
+  notify(data.message || (data.success ? 'Request sent.' : fallbackMessage), !data.success);
   if (data?.meta?.redirectUrl) { window.location.href = data.meta.redirectUrl; return; }
   if (data.success) form.reset();
 }
@@ -2351,7 +2451,16 @@ document.getElementById('inquiryForm')?.addEventListener('submit', async functio
   try {
     await submitLeadRequest(this, 'Could not send inquiry.');
   } catch (err) {
-    alert('Could not send inquiry right now.');
+    notify('Could not send inquiry right now.', true);
+  }
+});
+
+document.getElementById('contactUnlockForm')?.addEventListener('submit', async function(e){
+  e.preventDefault();
+  try {
+    await submitLeadRequest(this, 'Could not start contact unlock.');
+  } catch (err) {
+    notify('Could not start contact unlock right now.', true);
   }
 });
 
@@ -2360,7 +2469,66 @@ document.getElementById('bookingForm')?.addEventListener('submit', async functio
   try {
     await submitLeadRequest(this, 'Could not send booking request.');
   } catch (err) {
-    alert('Could not send booking request right now.');
+    notify('Could not send booking request right now.', true);
+  }
+});
+
+document.querySelectorAll('[data-favorite-id]').forEach((button) => {
+  const id = button.getAttribute('data-favorite-id');
+  if (!IS_AUTHENTICATED && loadGuestFavorites().has(id)) button.classList.add('active');
+  button.addEventListener('click', async () => {
+    if (!IS_AUTHENTICATED) {
+      const favorites = loadGuestFavorites();
+      if (favorites.has(id)) favorites.delete(id);
+      else favorites.add(id);
+      saveGuestFavorites(favorites);
+      button.classList.toggle('active', favorites.has(id));
+      notify(favorites.has(id) ? 'Saved to this browser.' : 'Removed from saved listings.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/favorites/${id}/toggle`, { method: 'POST', headers: { Accept: 'application/json' } });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Could not update saved listings.');
+      button.classList.toggle('active', data.active);
+      notify(data.message || 'Saved listings updated.');
+    } catch (error) {
+      notify(error.message || 'Could not update saved listings.', true);
+    }
+  });
+});
+
+document.getElementById('shareListingBtn')?.addEventListener('click', async () => {
+  const data = { title: LISTING_TITLE, text: 'Check this listing on Classic Rentals', url: window.location.href };
+  if (navigator.share) {
+    try { await navigator.share(data); return; } catch {}
+  }
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    notify('Listing link copied.');
+  } catch {
+    showCleanModal({
+      title: 'Share listing',
+      message: window.location.href,
+      actions: [{ label: 'Close', primary: true }],
+    });
+  }
+});
+
+document.getElementById('promoteListingBtn')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch(`/api/promotions/listing/${LISTING_ID}`, { method: 'POST', headers: { Accept: 'application/json' } });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Could not create promotion link.');
+    const link = data.data?.url || window.location.href;
+    await navigator.clipboard?.writeText(link).catch(() => null);
+    showCleanModal({
+      title: 'Promotion link ready',
+      message: `Share this link. If someone pays from your link, your profile earns 5% of the agent fee: ${link}`,
+      actions: [{ label: 'Close', primary: true }],
+    });
+  } catch (error) {
+    notify(error.message || 'Could not create promotion link.', true);
   }
 });
 </script>

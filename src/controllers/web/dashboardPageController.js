@@ -8,13 +8,15 @@ const AuditLog = require('../../models/AuditLog');
 const Setting = require('../../models/Setting');
 const Plan = require('../../models/Plan');
 const Subscription = require('../../models/Subscription');
+const Promotion = require('../../models/Promotion');
 const bcrypt = require('bcryptjs');
 const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
 const { getPagination } = require('../../utils/pagination');
 const { setFlash } = require('../../utils/flash');
-const { createSubscriptionCheckout } = require('../api/billingController');
+const { createSubscriptionCheckout, canUseManualProvider } = require('../api/billingController');
 const { getMonetizationContext } = require('../../services/monetizationService');
+const { sanitizeInquiryContact, sanitizeListingContacts } = require('../../services/contactAccessService');
 
 function render(req, res, view, title, extras = {}) {
   return res.render(view, { title, currentPath: req.originalUrl, ...extras });
@@ -45,8 +47,11 @@ function buildDashboardNav(role) {
     { label: 'Listings', path: '/dashboard/manage-listings', icon: '▣' },
     { label: 'Inquiries', path: '/dashboard/inquiries', icon: '✉' },
     { label: 'Reviews', path: '/dashboard/reviews', icon: '★' },
+    { label: 'Promotions', path: '/dashboard/promotions', icon: '↗' },
     { label: 'Profile', path: '/dashboard/profile', icon: '☺' },
   ];
+
+  if (role === 'user') items.push({ label: 'Create Listing', path: '/listings/create', icon: '+' });
 
   if (role === 'user') items.push({ label: 'Favorites', path: '/dashboard/favorites', icon: '♥' });
   if (['agent', 'admin', 'super-admin'].includes(role)) items.push({ label: 'Create Listing', path: '/listings/create', icon: '＋' });
@@ -77,7 +82,10 @@ exports.index = asyncHandler(async (req, res) => {
   const favoriteScope = adminView ? {} : { user: req.user._id };
 
   const agentListingIds = role === 'agent'
-    ? await Listing.find({ assignedAgent: req.user._id }).distinct('_id')
+    ? await Listing.find({ $or: [{ owner: req.user._id }, { assignedAgent: req.user._id }] }).distinct('_id')
+    : [];
+  const ownedListingIds = role === 'user'
+    ? await Listing.find({ owner: req.user._id }).distinct('_id')
     : [];
 
   const listingQueryForCards = adminView
@@ -91,9 +99,9 @@ exports.index = asyncHandler(async (req, res) => {
   const inquiryFilter = adminView
     ? {}
     : role === 'agent'
-      ? { listing: { $in: agentListingIds } }
+      ? { $or: [{ sender: req.user._id }, { owner: req.user._id }, { listing: { $in: agentListingIds } }] }
       : role === 'user'
-        ? { sender: req.user._id }
+        ? { $or: [{ sender: req.user._id }, { owner: req.user._id }, { listing: { $in: ownedListingIds } }] }
         : {};
 
   const [
@@ -215,7 +223,7 @@ exports.index = asyncHandler(async (req, res) => {
   const quickActions = [
     { label: 'Manage listings', path: '/dashboard/manage-listings' },
     { label: 'View analytics', path: '/dashboard/analytics' },
-    { label: role === 'user' ? 'Edit profile' : 'Create listing', path: role === 'user' ? '/dashboard/profile' : '/listings/create' },
+    { label: 'Create listing', path: '/listings/create' },
     { label: adminView ? 'Open users' : 'Open inquiries', path: adminView ? '/dashboard/users' : '/dashboard/inquiries' },
   ];
 
@@ -245,7 +253,16 @@ exports.manageListings = asyncHandler(async (req, res) => {
   const filter = ['admin', 'super-admin'].includes(req.user.role) ? {} : req.user.role === 'agent' ? { $or: [{ owner: req.user._id }, { assignedAgent: req.user._id }] } : { owner: req.user._id };
   if (req.query.status) filter.status = req.query.status;
   if (req.query.category) filter.category = req.query.category;
-  if (req.query.q) filter.$or = [{ title: new RegExp(req.query.q, 'i') }, { 'location.area': new RegExp(req.query.q, 'i') }];
+  if (req.query.q) {
+    const accessOr = filter.$or;
+    const searchOr = [{ title: new RegExp(req.query.q, 'i') }, { 'location.area': new RegExp(req.query.q, 'i') }];
+    if (accessOr) {
+      delete filter.$or;
+      filter.$and = [{ $or: accessOr }, { $or: searchOr }];
+    } else {
+      filter.$or = searchOr;
+    }
+  }
 
   const [listings, total, pendingCount, publishedCount, agents] = await Promise.all([
     Listing.find(filter).populate('owner assignedAgent', 'firstName lastName email').sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -279,14 +296,24 @@ exports.inquiries = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination({ page: req.query.page, limit: req.query.limit || 20 });
   let filter = {};
   if (req.user.role === 'agent') {
-    const agentListingIds = await Listing.find({ assignedAgent: req.user._id }).distinct('_id');
-    filter.listing = { $in: agentListingIds };
+    const agentListingIds = await Listing.find({ $or: [{ owner: req.user._id }, { assignedAgent: req.user._id }] }).distinct('_id');
+    filter = { $or: [{ sender: req.user._id }, { owner: req.user._id }, { listing: { $in: agentListingIds } }] };
   }
-  if (req.user.role === 'user') filter.sender = req.user._id;
+  if (req.user.role === 'user') {
+    const ownedListingIds = await Listing.find({ owner: req.user._id }).distinct('_id');
+    filter = { $or: [{ sender: req.user._id }, { owner: req.user._id }, { listing: { $in: ownedListingIds } }] };
+  }
   if (req.query.status) filter.status = req.query.status;
   if (req.query.q) {
     const q = new RegExp(req.query.q, 'i');
-    filter.$or = [{ name: q }, { email: q }, { message: q }];
+    const accessOr = filter.$or;
+    const searchOr = [{ name: q }, { email: q }, { message: q }];
+    if (accessOr) {
+      delete filter.$or;
+      filter.$and = [{ $or: accessOr }, { $or: searchOr }];
+    } else {
+      filter.$or = searchOr;
+    }
   }
 
   const [inquiries, total] = await Promise.all([
@@ -294,7 +321,11 @@ exports.inquiries = asyncHandler(async (req, res) => {
     Inquiry.countDocuments(filter),
   ]);
 
-  return render(req, res, 'pages/dashboard/inquiries', 'Inquiries', { inquiries, filters: req.query, pagination: pagify(total, page, limit) });
+  return render(req, res, 'pages/dashboard/inquiries', 'Inquiries', {
+    inquiries: inquiries.map((item) => sanitizeInquiryContact(item, req.user)),
+    filters: req.query,
+    pagination: pagify(total, page, limit),
+  });
 });
 
 exports.reports = asyncHandler(async (req, res) => {
@@ -387,16 +418,26 @@ exports.reviews = asyncHandler(async (req, res) => {
   return render(req, res, 'pages/dashboard/reviews', 'Reviews', { reviews, adminView, filters: req.query, pagination: pagify(total, page, limit) });
 });
 
+exports.promotions = asyncHandler(async (req, res) => {
+  const promotions = await Promotion.find({ promoter: req.user._id })
+    .populate('listing', 'title slug status category price location images')
+    .sort({ createdAt: -1 })
+    .lean();
+  return render(req, res, 'pages/dashboard/promotions', 'Promotions', { promotions });
+});
+
 
 exports.inquiryShow = asyncHandler(async (req, res) => {
   const inquiry = await Inquiry.findById(req.params.id).populate('listing', 'title slug status assignedAgent owner').populate('sender', 'firstName lastName email phone').lean();
   if (!inquiry) throw new ApiError(404, 'Inquiry not found');
   if (!['admin', 'super-admin'].includes(req.user.role)) {
     const permitted = (req.user.role === 'user' && inquiry.sender && String(inquiry.sender._id) === String(req.user._id))
+      || (inquiry.listing && inquiry.listing.owner && String(inquiry.listing.owner) === String(req.user._id))
+      || (inquiry.owner && String(inquiry.owner) === String(req.user._id))
       || (req.user.role === 'agent' && inquiry.listing && inquiry.listing.assignedAgent && String(inquiry.listing.assignedAgent) === String(req.user._id));
     if (!permitted) throw new ApiError(403, 'Forbidden');
   }
-  return render(req, res, 'pages/dashboard/inquiry-show', 'Inquiry details', { inquiry });
+  return render(req, res, 'pages/dashboard/inquiry-show', 'Inquiry details', { inquiry: sanitizeInquiryContact(inquiry, req.user) });
 });
 
 exports.reportShow = asyncHandler(async (req, res) => {
@@ -406,8 +447,10 @@ exports.reportShow = asyncHandler(async (req, res) => {
     .populate('resolvedBy', 'firstName lastName email')
     .lean();
   if (!report) throw new ApiError(404, 'Report not found');
-  if (!['admin', 'super-admin'].includes(req.user.role) && String(report.reporter?._id || '') !== String(req.user._id)) throw new ApiError(403, 'Forbidden');
-  return render(req, res, 'pages/dashboard/report-show', 'Report details', { report, adminView: ['admin', 'super-admin'].includes(req.user.role) });
+  const adminView = ['admin', 'super-admin'].includes(req.user.role);
+  if (!adminView && String(report.reporter?._id || '') !== String(req.user._id)) throw new ApiError(403, 'Forbidden');
+  if (!adminView && report.listing) report.listing = sanitizeListingContacts(report.listing);
+  return render(req, res, 'pages/dashboard/report-show', 'Report details', { report, adminView });
 });
 
 exports.reviewShow = asyncHandler(async (req, res) => {
@@ -434,11 +477,13 @@ exports.userShow = asyncHandler(async (req, res) => {
 exports.analytics = asyncHandler(async (req, res) => {
   const adminView = ['admin', 'super-admin'].includes(req.user.role);
   const scopeFilter = adminView ? {} : req.user.role === 'agent' ? { $or: [{ owner: req.user._id }, { assignedAgent: req.user._id }] } : { owner: req.user._id };
+  const scopedListingIds = adminView ? [] : await Listing.find(scopeFilter).distinct('_id');
+  const inquiryScope = adminView ? {} : { $or: [{ sender: req.user._id }, { owner: req.user._id }, { listing: { $in: scopedListingIds } }] };
   const [totalListings, publishedListings, pendingListings, totalInquiries, totalFavorites, categories, recentListings] = await Promise.all([
     Listing.countDocuments(scopeFilter),
     Listing.countDocuments({ ...scopeFilter, status: 'published' }),
     Listing.countDocuments({ ...scopeFilter, status: 'pending' }),
-    adminView ? Inquiry.countDocuments() : req.user.role === 'user' ? Inquiry.countDocuments({ sender: req.user._id }) : Inquiry.countDocuments({}),
+    Inquiry.countDocuments(inquiryScope),
     Favorite.countDocuments(adminView ? {} : { user: req.user._id }),
     Listing.aggregate([{ $match: scopeFilter }, { $group: { _id: '$category', count: { $sum: 1 } } }, { $sort: { count: -1, _id: 1 } }]),
     Listing.find(scopeFilter).sort({ createdAt: -1 }).limit(12).lean(),
@@ -563,8 +608,11 @@ exports.updateInquiryStatusAction = asyncHandler(async (req, res) => {
   const inquiry = await Inquiry.findById(req.params.id);
   if (!inquiry) throw new ApiError(404, 'Inquiry not found');
   if (!['admin', 'super-admin'].includes(req.user.role)) {
-    const ownedListing = await Listing.exists({ _id: inquiry.listing, assignedAgent: req.user._id });
-    if (!(ownedListing || String(inquiry.sender) === String(req.user._id))) throw new ApiError(403, 'Forbidden');
+    const ownedListing = await Listing.exists({
+      _id: inquiry.listing,
+      $or: [{ owner: req.user._id }, { assignedAgent: req.user._id }],
+    });
+    if (!(ownedListing || String(inquiry.owner) === String(req.user._id) || String(inquiry.sender) === String(req.user._id))) throw new ApiError(403, 'Forbidden');
   }
   inquiry.status = req.body.status || inquiry.status;
   await inquiry.save();
@@ -648,7 +696,11 @@ exports.startSubscriptionAction = asyncHandler(async (req, res) => {
     setFlash(res, 'error', 'Selected plan was not found.');
     return res.redirect('/dashboard/billing');
   }
-  const provider = String(req.body.provider || 'manual').trim().toLowerCase() === 'pesapal' ? 'pesapal' : 'manual';
+  const provider = String(req.body.provider || 'pesapal').trim().toLowerCase() === 'manual' ? 'manual' : 'pesapal';
+  if (provider === 'manual' && plan.amount > 0 && !canUseManualProvider(req.user)) {
+    setFlash(res, 'error', 'Manual paid plan activation is restricted to admins. Use Pesapal checkout.');
+    return res.redirect('/dashboard/billing');
+  }
   const result = await createSubscriptionCheckout({ user: req.user, plan, provider, reference: req.body.reference });
   await AuditLog.create({ actor: req.user._id, action: provider === 'pesapal' ? 'dashboard.billing.checkout' : 'dashboard.billing.start', entityType: 'Subscription', entityId: result.subscription._id, meta: { plan: plan.slug, provider, paymentId: result.payment?._id } });
   if (result.redirectUrl) {

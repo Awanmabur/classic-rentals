@@ -26,6 +26,7 @@ router.post('/settings', controller.upsertSettingAction);
 router.get('/audit-logs', controller.auditLogs);
 router.get('/favorites', controller.favorites);
 router.get('/profile', controller.profile);
+router.get('/promotions', controller.promotions);
 router.get('/billing', controller.billing);
 router.post('/billing/start', controller.startSubscriptionAction);
 router.post('/billing/cancel', controller.cancelSubscriptionAction);

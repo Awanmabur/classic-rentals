@@ -8,6 +8,7 @@ const Review = require('../models/Review');
 const Report = require('../models/Report');
 const Plan = require('../models/Plan');
 const Subscription = require('../models/Subscription');
+const Promotion = require('../models/Promotion');
 
 (async () => {
   await connectDB();
@@ -21,6 +22,7 @@ const Subscription = require('../models/Subscription');
     User.deleteMany({}),
     Plan.deleteMany({}),
     Subscription.deleteMany({}),
+    Promotion.deleteMany({}),
   ]);
 
   const [superAdmin, admin, agent, user] = await User.create([
@@ -117,6 +119,7 @@ const Subscription = require('../models/Subscription');
       features: [
         { key: 'listings', label: 'Up to 25 active listings', limit: 25 },
         { key: 'featured', label: '1 featured slot', limit: 1 },
+        { key: 'contact-unlock', label: 'Paid contact unlocks', included: true },
         { key: 'verification', label: 'Paid verification requests', included: true, limit: 3 },
         { key: 'analytics', label: 'Billing and listing analytics', included: true },
       ],
@@ -127,6 +130,7 @@ const Subscription = require('../models/Subscription');
       features: [
         { key: 'listings', label: 'Up to 120 active listings', limit: 120 },
         { key: 'featured', label: '10 featured slots', limit: 10 },
+        { key: 'contact-unlock', label: 'Paid contact unlocks', included: true },
         { key: 'verification', label: 'Paid verification requests', included: true, limit: 25 },
         { key: 'exact-map', label: 'Premium map/location upsell', included: true },
         { key: 'analytics', label: 'Advanced analytics', included: true },
@@ -139,6 +143,7 @@ const Subscription = require('../models/Subscription');
         { key: 'listings', label: 'Up to 250 active listings', limit: 250 },
         { key: 'featured', label: '25 featured slots', limit: 25 },
         { key: 'staff', label: '3 admin seats', limit: 3 },
+        { key: 'contact-unlock', label: 'Paid contact unlocks', included: true },
         { key: 'verification', label: 'Paid verification requests', included: true, limit: 100 },
         { key: 'analytics', label: 'Advanced analytics', included: true },
       ],

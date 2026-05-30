@@ -10,7 +10,11 @@ const pesapal = require('../../services/pesapalService');
 const { addInterval } = require('../../services/paymentLifecycleService');
 
 function normalizeProvider(value = '') {
-  return String(value || 'manual').trim().toLowerCase() === 'pesapal' ? 'pesapal' : 'manual';
+  return String(value || 'pesapal').trim().toLowerCase() === 'manual' ? 'manual' : 'pesapal';
+}
+
+function canUseManualProvider(user) {
+  return ['admin', 'super-admin'].includes(user?.role);
 }
 
 function makeReference(prefix = 'SUB') {
@@ -122,6 +126,9 @@ exports.startSubscription = asyncHandler(async (req, res) => {
   if (!plan || !plan.isActive) throw new ApiError(404, 'Plan not found');
 
   const provider = normalizeProvider(req.body.provider);
+  if (provider === 'manual' && plan.amount > 0 && !canUseManualProvider(req.user)) {
+    throw new ApiError(403, 'Manual paid plan activation is restricted to admins. Use Pesapal checkout.');
+  }
   const result = await createSubscriptionCheckout({ user: req.user, plan, provider, reference: req.body.reference });
 
   await AuditLog.create({
@@ -151,3 +158,4 @@ exports.cancelMySubscription = asyncHandler(async (req, res) => {
 });
 
 exports.createSubscriptionCheckout = createSubscriptionCheckout;
+exports.canUseManualProvider = canUseManualProvider;

@@ -2,6 +2,7 @@ const Favorite = require('../../models/Favorite');
 const Listing = require('../../models/Listing');
 const asyncHandler = require('../../utils/asyncHandler');
 const ApiError = require('../../utils/ApiError');
+const { sanitizeListingContacts } = require('../../services/contactAccessService');
 
 exports.toggleFavorite = asyncHandler(async (req, res) => {
   const listing = await Listing.findById(req.params.listingId);
@@ -22,14 +23,15 @@ exports.getMyFavorites = asyncHandler(async (req, res) => {
     .populate({
       path: 'listing',
       populate: [
-        { path: 'owner', select: 'firstName lastName phone email avatar' },
-        { path: 'assignedAgent', select: 'firstName lastName phone email avatar' },
+        { path: 'owner', select: 'firstName lastName avatar role' },
+        { path: 'assignedAgent', select: 'firstName lastName avatar role' },
       ],
     })
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.json({
     success: true,
-    data: favorites.map((fav) => fav.listing).filter(Boolean),
+    data: favorites.map((fav) => fav.listing).filter(Boolean).map(sanitizeListingContacts),
   });
 });

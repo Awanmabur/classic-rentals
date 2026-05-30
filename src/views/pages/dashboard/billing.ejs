@@ -68,9 +68,9 @@
               <form class="filter-grid-4 filter-grid-4-subtle" method="post" action="/dashboard/billing/start">
                 <% if (csrfToken) { %><input type="hidden" name="_csrf" value="<%= csrfToken %>"><% } %>
                 <input type="hidden" name="planId" value="<%= plan._id %>">
-                <div class="field"><label>Provider</label><select name="provider"><option value="pesapal">Pesapal checkout</option><option value="manual">Manual</option></select></div>
+                <div class="field"><label>Provider</label><select name="provider"><option value="pesapal">Pesapal checkout</option><% if (['admin','super-admin'].includes(currentUser?.role)) { %><option value="manual">Manual admin activation</option><% } %></select></div>
                 <div class="field"><label>Reference</label><input name="reference" placeholder="manual payment reference"></div>
-                <div class="field billing-plan-note"><span class="muted">Pesapal redirects to payment. Manual marks the plan as paid immediately.</span></div>
+                <div class="field billing-plan-note"><span class="muted">Pesapal redirects to secure payment. Manual activation is admin-only.</span></div>
                 <div class="field-inline"><button class="primary-btn stretch-btn" type="submit">Continue</button></div>
               </form>
             </article>

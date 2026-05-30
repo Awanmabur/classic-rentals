@@ -70,6 +70,7 @@ async function getMonetizationContext(user, opts = {}) {
     canRequestVerification: privileged || hasIncludedFeature(plan, 'verification', defaults.verification > 0),
     canUseExactMapUpsell: privileged || hasIncludedFeature(plan, 'exact-map', defaults.exactMap > 0),
     hasAnalytics: privileged || hasIncludedFeature(plan, 'analytics', defaults.analytics > 0),
+    canChargeContactAccessFee: true,
     canChargeViewingFee: true,
     canChargeReservationFee: true,
   };

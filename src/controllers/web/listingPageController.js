@@ -1,5 +1,9 @@
 const Listing = require('../../models/Listing');
 const Favorite = require('../../models/Favorite');
+const Inquiry = require('../../models/Inquiry');
+const Review = require('../../models/Review');
+const Report = require('../../models/Report');
+const Promotion = require('../../models/Promotion');
 const AuditLog = require('../../models/AuditLog');
 const ApiError = require('../../utils/ApiError');
 const asyncHandler = require('../../utils/asyncHandler');
@@ -7,6 +11,15 @@ const { setFlash } = require('../../utils/flash');
 const { validateListingPayload } = require('../../utils/validators');
 const { uploadManyToCloudinary, deleteManyFromCloudinary } = require('../../services/mediaService');
 const { getMonetizationContext } = require('../../services/monetizationService');
+const { getPostingFeeSnapshot } = require('../../services/revenueShareService');
+const { createListingPostingCheckout } = require('../../services/listingPaymentService');
+const { resolvePromotionForListing, markPromotionClick } = require('../../services/promotionService');
+const {
+  getContactAccess,
+  getContactParties,
+  sanitizeListingContacts,
+  isObjectId,
+} = require('../../services/contactAccessService');
 
 
 const CATEGORY_LABELS = {
@@ -72,8 +85,6 @@ function normalizeListing(listing) {
       name: [agent.firstName, agent.lastName].filter(Boolean).join(' ') || agent.email || 'Classic Rentals Agent',
       verified: Boolean(listing.verified),
       responseMins: 8,
-      email: agent.email || '',
-      phone: agent.phone || '',
     },
     images: (listing.images || []).map((img) => img.url),
     videos: (listing.videos || []).map((video) => video.url),
@@ -88,6 +99,15 @@ function canEditListing(user, listing) {
 }
 
 function buildListingBody(body, user, current = null) {
+  const postingFee = current?.monetization?.postingFeeStatus === 'paid'
+    ? {
+      postingFeeRequired: current.monetization.postingFeeRequired || false,
+      postingFeeAmount: current.monetization.postingFeeAmount || 0,
+      postingFeeCurrency: current.monetization.postingFeeCurrency || 'UGX',
+      postingFeeStatus: 'paid',
+      postingFeeReference: current.monetization.postingFeeReference,
+    }
+    : getPostingFeeSnapshot(user);
   const payload = {
     title: String(body.title || '').trim(),
     description: String(body.description || '').trim(),
@@ -133,7 +153,10 @@ function buildListingBody(body, user, current = null) {
       reservationFeeEnabled: body.reservationFeeEnabled === 'true' || body.reservationFeeEnabled === 'on',
       reservationFeeAmount: body.reservationFeeAmount ? Number(body.reservationFeeAmount) : 0,
       reservationFeeCurrency: body.reservationFeeCurrency || body.currency || current?.monetization?.reservationFeeCurrency || 'USD',
-      leadAccess: body.leadAccess === 'paid' ? 'paid' : 'open',
+      leadAccess: body.leadAccess === 'open' ? 'open' : 'paid',
+      contactFeeAmount: body.contactFeeAmount ? Number(body.contactFeeAmount) : (current?.monetization?.contactFeeAmount || 5),
+      contactFeeCurrency: body.contactFeeCurrency || body.currency || current?.monetization?.contactFeeCurrency || 'USD',
+      ...postingFee,
       planSnapshot: current?.monetization?.planSnapshot || 'free',
       lastMonetizedAt: new Date(),
     },
@@ -141,10 +164,10 @@ function buildListingBody(body, user, current = null) {
   if (!current) {
     payload.owner = user._id;
     payload.assignedAgent = user.role === 'agent' ? user._id : undefined;
-    payload.status = 'published';
+    payload.status = postingFee.postingFeeRequired ? 'pending' : 'published';
     payload.verified = ['admin', 'super-admin'].includes(user.role) ? body.verified === 'true' || body.verified === 'on' : false;
     payload.featured = ['admin', 'super-admin'].includes(user.role) ? body.featured === 'true' || body.featured === 'on' : false;
-    payload.publishedAt = new Date();
+    payload.publishedAt = postingFee.postingFeeRequired ? undefined : new Date();
   }
   return payload;
 }
@@ -186,13 +209,20 @@ exports.index = asyncHandler(async (req, res) => {
   const area = String(req.query.area || '').trim();
   const q = String(req.query.q || '').trim();
   if (q) {
-    filter.$or = [
+    const accessOr = filter.$or;
+    const searchOr = [
       { title: new RegExp(q, 'i') },
       { description: new RegExp(q, 'i') },
       { 'location.area': new RegExp(q, 'i') },
       { 'location.city': new RegExp(q, 'i') },
       { amenities: new RegExp(q, 'i') },
     ];
+    if (accessOr) {
+      delete filter.$or;
+      filter.$and = [{ $or: accessOr }, { $or: searchOr }];
+    } else {
+      filter.$or = searchOr;
+    }
   }
   if (area && area !== 'all') filter['location.area'] = new RegExp(area, 'i');
   if (String(req.query.verified || '') === '1') filter.verified = true;
@@ -223,8 +253,8 @@ exports.index = asyncHandler(async (req, res) => {
   };
   const sort = sortMap[req.query.sort] || sortMap.featured;
   const listingsRaw = await Listing.find(filter)
-    .populate('owner', 'firstName lastName email phone')
-    .populate('assignedAgent', 'firstName lastName email phone')
+    .populate('owner', 'firstName lastName')
+    .populate('assignedAgent', 'firstName lastName')
     .sort(sort)
     .limit(120)
     .lean();
@@ -264,13 +294,36 @@ exports.index = asyncHandler(async (req, res) => {
 });
 
 exports.show = asyncHandler(async (req, res) => {
-  const listing = await Listing.findOne({ slug: req.params.slug }).populate('owner assignedAgent').lean();
+  const lookup = isObjectId(req.params.slug)
+    ? { $or: [{ slug: req.params.slug }, { _id: req.params.slug }] }
+    : { slug: req.params.slug };
+  const listing = await Listing.findOne(lookup).populate('owner assignedAgent');
   if (!listing) return res.status(404).render('pages/errors/404', { title: 'Listing not found' });
-  const canViewPrivate = req.user && (String(req.user._id) === String(listing.owner?._id) || ['admin', 'super-admin'].includes(req.user.role));
+  const canViewPrivate = req.user && (
+    String(req.user._id) === String(listing.owner?._id) ||
+    String(req.user._id) === String(listing.assignedAgent?._id) ||
+    ['admin', 'super-admin'].includes(req.user.role)
+  );
   if (listing.status !== 'published' && !canViewPrivate) throw new ApiError(403, 'You are not allowed to view this listing');
+  if (req.query.promo) {
+    const promotion = await resolvePromotionForListing({ token: req.query.promo, listingId: listing._id });
+    if (promotion) {
+      await markPromotionClick(promotion).catch(() => null);
+      res.cookie('cr_promo', promotion.token, {
+        signed: true,
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+      });
+    }
+  }
+  const contactAccess = await getContactAccess({ user: req.user, listing, accessTokens: req.signedCookies?.cr_contact_access });
+  const contactParties = getContactParties(listing, contactAccess.hasAccess);
   res.render('pages/listings/show', {
     title: listing.title,
-    listing,
+    listing: contactAccess.hasAccess ? listing.toObject() : sanitizeListingContacts(listing.toObject()),
+    contactAccess,
+    contactParties,
     currentUser: req.user || null,
     mapDefaults: { lat: process.env.MAP_DEFAULT_LAT || '4.8594', lng: process.env.MAP_DEFAULT_LNG || '31.5713' },
   });
@@ -305,8 +358,18 @@ exports.createAction = asyncHandler(async (req, res) => {
     await listing.save();
   }
   await AuditLog.create({ actor: req.user._id, action: 'listing.create.web', entityType: 'Listing', entityId: listing._id, meta: { title: listing.title, tier: listing.monetization?.tier || 'free' } });
+  if (listing.monetization?.postingFeeRequired && listing.monetization?.postingFeeStatus === 'pending') {
+    try {
+      const checkout = await createListingPostingCheckout({ user: req.user, listing });
+      if (checkout.redirectUrl) return res.redirect(checkout.redirectUrl);
+    } catch (error) {
+      setFlash(res, 'error', `${error.message} Listing saved as pending until the landlord posting fee is paid.`);
+      return res.redirect(`/listings/${listing.slug}/edit`);
+    }
+  }
   const featureMsg = listing.monetization?.featuredRequested && !listing.featured ? ' Your current plan has no free featured slots left, so the listing was saved as standard.' : '';
-  setFlash(res, 'success', `Listing created successfully.${featureMsg}`);
+  const postingMsg = listing.monetization?.postingFeeStatus === 'pending' ? ' Landlord posting fee must be paid before publishing.' : '';
+  setFlash(res, 'success', `Listing created successfully.${featureMsg}${postingMsg}`);
   return res.redirect(`/listings/${listing.slug}/edit`);
 });
 
@@ -355,6 +418,25 @@ exports.updateAction = asyncHandler(async (req, res) => {
   return res.redirect(`/listings/${listing.slug}/edit`);
 });
 
+exports.startPostingFeeAction = asyncHandler(async (req, res) => {
+  const listing = await Listing.findById(req.params.id);
+  if (!listing) throw new ApiError(404, 'Listing not found');
+  if (!canEditListing(req.user, listing)) throw new ApiError(403, 'You are not allowed to edit this listing');
+  if (!listing.monetization?.postingFeeRequired || listing.monetization?.postingFeeStatus === 'paid') {
+    setFlash(res, 'success', 'No posting fee is due for this listing.');
+    return res.redirect(`/listings/${listing.slug}/edit`);
+  }
+  try {
+    const checkout = await createListingPostingCheckout({ user: req.user, listing });
+    if (checkout.redirectUrl) return res.redirect(checkout.redirectUrl);
+  } catch (error) {
+    setFlash(res, 'error', `${error.message} Listing remains pending until the posting fee is paid.`);
+    return res.redirect(`/listings/${listing.slug}/edit`);
+  }
+  setFlash(res, 'error', 'Could not start posting fee checkout.');
+  return res.redirect(`/listings/${listing.slug}/edit`);
+});
+
 exports.deleteAction = asyncHandler(async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   if (!listing) throw new ApiError(404, 'Listing not found');
@@ -365,7 +447,13 @@ exports.deleteAction = asyncHandler(async (req, res) => {
     ...(listing.videos || []).map(video => video.publicId),
   ].filter(Boolean);
   if (publicIds.length) await deleteManyFromCloudinary(publicIds);
-  await Favorite.deleteMany({ listing: listing._id });
+  await Promise.all([
+    Favorite.deleteMany({ listing: listing._id }),
+    Inquiry.deleteMany({ listing: listing._id }),
+    Review.deleteMany({ listing: listing._id }),
+    Report.deleteMany({ listing: listing._id }),
+    Promotion.deleteMany({ listing: listing._id }),
+  ]);
   await listing.deleteOne();
   await AuditLog.create({ actor: req.user._id, action: 'listing.delete.web', entityType: 'Listing', entityId: listing._id, meta: { title: listing.title } });
   setFlash(res, 'success', 'Listing deleted successfully.');
@@ -414,13 +502,20 @@ exports.manageMine = asyncHandler(async (req, res) => {
   const area = String(req.query.area || '').trim();
   const q = String(req.query.q || '').trim();
   if (q) {
-    filter.$or = [
+    const accessOr = filter.$or;
+    const searchOr = [
       { title: new RegExp(q, 'i') },
       { description: new RegExp(q, 'i') },
       { 'location.area': new RegExp(q, 'i') },
       { 'location.city': new RegExp(q, 'i') },
       { amenities: new RegExp(q, 'i') },
     ];
+    if (accessOr) {
+      delete filter.$or;
+      filter.$and = [{ $or: accessOr }, { $or: searchOr }];
+    } else {
+      filter.$or = searchOr;
+    }
   }
   if (area && area !== 'all') filter['location.area'] = new RegExp(area, 'i');
   if (String(req.query.verified || '') === '1') filter.verified = true;
@@ -452,8 +547,8 @@ exports.manageMine = asyncHandler(async (req, res) => {
   const sort = sortMap[req.query.sort] || sortMap.featured;
 
   const listingsRaw = await Listing.find(filter)
-    .populate('owner', 'firstName lastName email phone')
-    .populate('assignedAgent', 'firstName lastName email phone')
+    .populate('owner', 'firstName lastName')
+    .populate('assignedAgent', 'firstName lastName')
     .sort(sort)
     .limit(120)
     .lean();
