@@ -4,9 +4,11 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Classic Rentals — Premium Rentals Platform</title>
-    <meta name="description"
-        content="Classic Rentals: cars, houses, land, shops, offices & short-stays in Juba. Verified listings, fast search, premium experience." />
+    <title><%= title || 'Browse listings — Classic Rentals' %></title>
+    <% const publicListingIndex = String(currentPath || '').split('?')[0].replace(/\/+$/, '') === '/listings'; %>
+    <meta name="description" content="Browse published rentals and property listings in Juba. Filter houses, apartments, land, vehicles, shops, offices and short-stays by location and details." />
+    <meta name="robots" content="<%= publicListingIndex ? 'index,follow,max-image-preview:large' : 'noindex,nofollow' %>" />
+    <% if (publicListingIndex && publicOrigin) { %><link rel="canonical" href="<%= publicOrigin %>/listings" /><% } %>
     <meta name="theme-color" content="#070a14" />
     <meta name="color-scheme" content="dark light" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
