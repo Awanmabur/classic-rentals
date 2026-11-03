@@ -11,6 +11,8 @@ const morgan = require('morgan');
 
 const webRoutes = require('./routes/web');
 const apiRoutes = require('./routes/api');
+const discoveryRoutes = require('./routes/web/discovery');
+const { publicOrigin } = require('./utils/publicSeo');
 const attachUser = require('./middlewares/attachUser');
 const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
@@ -28,6 +30,8 @@ app.use(helmet({
   referrerPolicy: { policy: 'no-referrer-when-downgrade' },
 }));
 app.use(compression());
+// Crawlable metadata must be public and not require a CSRF/session cookie.
+app.use(discoveryRoutes);
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', etag: true }));
 app.use(express.json({ limit: '2mb' }));
@@ -58,6 +62,7 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.originalUrl || req.path || '';
   res.locals.csrfToken = typeof req.csrfToken === 'function' ? req.csrfToken() : null;
   res.locals.siteName = 'Classic Rentals';
+  res.locals.publicOrigin = publicOrigin();
   res.locals.year = new Date().getFullYear();
   res.locals.flash = flash;
   next();
