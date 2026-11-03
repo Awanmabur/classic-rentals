@@ -133,3 +133,22 @@ This project is now a much stronger starter and includes more missing modules, b
 - Node test suite and GitHub Actions CI workflow
 - `.dockerignore` for cleaner builds
 
+
+
+## Public SEO and crawler discovery
+
+The Express application now provides `/robots.txt`, `/llms.txt`, and
+`/sitemap.xml` directly. The sitemap includes the homepage, public listing
+directory and up to 10,000 **published** listing URLs. Drafts, dashboards,
+authentication, payment, and other private workflows are excluded.
+
+Before releasing a public rentals domain, configure `PUBLIC_SITE_URL` to that
+verified site's HTTPS origin (without a path or trailing subfolder). The
+application does **not** invent a canonical domain from a request Host header.
+Until this setting exists, sitemap publication returns HTTP 503 instead of
+advertising a false URL. Public page canonical tags are likewise omitted.
+
+Run `node --test tests/public-seo.test.js` to check origin validation and
+indexing boundaries. This verifies source-level behavior, not live search
+indexing, Cloudflare routing, or production readiness. Verify the final domain,
+published listing access, privacy controls, backups and deployment separately.
