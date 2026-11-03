@@ -1,0 +1,26 @@
+name: Classic Rentals Public SEO Integrity
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  source-seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public discovery and canonical URL source
+        run: |
+          node --check src/utils/publicSeo.js
+          node --check src/routes/web/discovery.js
+          node --check src/app.js
+          node --test tests/public-seo.test.js
